@@ -1,5 +1,7 @@
 # LTPI IP Core — DC-SCM 2.0 LVDS Tunneling Protocol & Interface (SCM + HPM)
 
+[![verify](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml/badge.svg)](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml)
+
 A device-agnostic SystemVerilog implementation of the **OCP DC-SCM 2.0 LTPI**
 (LVDS Tunneling Protocol & Interface, Revision 1.0) for **both link endpoints** —
 the **SCM** (Secure Control Module, drives link training) and the **HPM** (Host

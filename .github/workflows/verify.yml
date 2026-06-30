@@ -1,21 +1,87 @@
 name: verify
 
-# Formal proofs (yosys + SymbiYosys + boolector) and the Icarus simulation run on every
-# push / PR. Quartus synthesis + STA is proprietary and Windows-hosted, so it is NOT run
-# in CI — see syn/altera/README.md to reproduce it locally.
+# CI for the LTPI IP core. Three vendor-neutral gates run on every push / PR:
+#   lint    - iverilog elaboration of both endpoint tops (blocking) + verilator lint (advisory)
+#   sim     - Icarus end-to-end dual-rate SCM<->HPM link  -> must report "PASS 11/11"
+#   formal  - SymbiYosys + boolector, one job per proof   -> each must end PASS
+# Quartus synthesis + STA is proprietary and Windows-hosted, so it is NOT run here;
+# see syn/altera/README.md to reproduce it locally.
 
 on:
   push:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  formal-and-sim:
+  # ----------------------------------------------------------------------------
+  # Fast lint gate (no heavy toolchain): elaborate both tops with Icarus, then a
+  # non-blocking verilator lint pass for style/width advisories.
+  # ----------------------------------------------------------------------------
+  lint:
+    name: Lint & elaborate
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install iverilog + verilator
+        run: sudo apt-get update && sudo apt-get install -y iverilog verilator
+
+      - name: Elaborate endpoint tops (iverilog -g2012, must compile clean)
+        run: |
+          set -euo pipefail
+          for top in ltpi_scm_top ltpi_hpm_top; do
+            echo "== elaborate $top =="
+            iverilog -g2012 -I rtl -t null -s "$top" "rtl/$top.sv"
+          done
+          echo "both tops elaborate clean"
+
+      - name: Verilator lint (advisory — does not fail the build)
+        continue-on-error: true
+        run: |
+          for top in ltpi_scm_top ltpi_hpm_top; do
+            echo "== verilator lint $top =="
+            verilator --lint-only -sv -Wall -Wno-fatal \
+              -Wno-DECLFILENAME -Wno-MULTITOP -Wno-IMPORTSTAR \
+              +incdir+rtl "rtl/$top.sv" || true
+          done
+
+  # ----------------------------------------------------------------------------
+  # End-to-end simulation: live dual-rate SCM<->HPM link, all channels. Only
+  # needs Icarus, so it runs fast and independent of the formal toolchain.
+  # ----------------------------------------------------------------------------
+  sim:
+    name: Simulation (Icarus)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Icarus Verilog
+        run: sudo apt-get update && sudo apt-get install -y iverilog
+
+      - name: Run SCM<->HPM link sim (must report PASS 11/11)
+        run: |
+          set -euo pipefail
+          ./sim/run.sh | tee /tmp/sim.log
+          grep -q "PASS 11/11" /tmp/sim.log
+
+  # ----------------------------------------------------------------------------
+  # Warm the OSS CAD Suite cache once so the formal matrix below restores it
+  # instead of every matrix leg re-downloading (~700 MB) on a cold cache.
+  # ----------------------------------------------------------------------------
+  toolchain:
+    name: OSS CAD Suite (cache warm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
       - name: Cache OSS CAD Suite
         id: cache-oss
         uses: actions/cache@v4
@@ -23,7 +89,7 @@ jobs:
           path: ~/eda-tools/oss-cad-suite
           key: oss-cad-suite-v1
 
-      - name: Install OSS CAD Suite (yosys + SymbiYosys + boolector + iverilog)
+      - name: Download OSS CAD Suite (yosys + SymbiYosys + boolector)
         if: steps.cache-oss.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -38,18 +104,61 @@ jobs:
           curl -L --retry 3 -o oss.tgz "$URL"
           tar xzf oss.tgz && rm oss.tgz
 
+  # ----------------------------------------------------------------------------
+  # Formal proofs: one job per .sby so each proof shows as its own check. Each
+  # restores the warmed cache and must end PASS (no FAIL/ERROR/UNKNOWN tasks).
+  # ----------------------------------------------------------------------------
+  formal:
+    name: Formal
+    needs: toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        proof:
+          - ltpi_8b10b
+          - ltpi_frame
+          - ltpi_cdc_fifo
+          - ltpi_link_fsm
+          - ltpi_gpio_chan
+          - ltpi_i2c_relay
+          - ltpi_data_chan
+          - ltpi_csr
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore OSS CAD Suite
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/eda-tools/oss-cad-suite
+          key: oss-cad-suite-v1
+          fail-on-cache-miss: true
+
       - name: Put the toolchain on PATH
         run: echo "$HOME/eda-tools/oss-cad-suite/bin" >> "$GITHUB_PATH"
 
       - name: Tool versions
-        run: yosys -V | head -1 && sby --version && iverilog -V | head -1
+        run: yosys -V | head -1 && sby --version
 
-      - name: Formal proofs (SymbiYosys — must end ALL GREEN)
+      - name: Prove ${{ matrix.proof }}
+        working-directory: formal
         run: |
-          cd formal && ./run_all.sh | tee /tmp/formal.log
-          grep -q "FORMAL: ALL GREEN" /tmp/formal.log
+          set -uo pipefail
+          out=$(sby -f "${{ matrix.proof }}.sby" 2>&1); rc=$?
+          echo "$out"
+          if [ "$rc" -ne 0 ] || echo "$out" | grep -qE "DONE \((FAIL|ERROR|UNKNOWN)"; then
+            echo "::error::formal proof FAILED: ${{ matrix.proof }}"
+            exit 1
+          fi
+          echo "formal proof PASSED: ${{ matrix.proof }}"
 
-      - name: Simulation (Icarus — must end PASS 11/11)
-        run: |
-          ./sim/run.sh | tee /tmp/sim.log
-          grep -q "PASS 11/11" /tmp/sim.log
+  # ----------------------------------------------------------------------------
+  # Single aggregate check to gate branch protection on lint + sim + formal.
+  # ----------------------------------------------------------------------------
+  verify-complete:
+    name: verify complete
+    needs: [lint, sim, formal]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "lint + sim + formal all green"
