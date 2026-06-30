@@ -1,0 +1,21 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+prove: depth 12
+cover: mode cover
+cover: depth 360       # 255 Detect TX frames + Speed/Advertise/Config + skew
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -sv -formal ltpi_pkg.sv ltpi_link_fsm.sv
+chparam -set ADVERTISE_CYCLES 2 ltpi_link_fsm
+prep -top ltpi_link_fsm
+
+[files]
+../rtl/ltpi_pkg.sv
+../rtl/ltpi_link_fsm.sv

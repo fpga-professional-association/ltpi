@@ -1,0 +1,16 @@
+[1657855000] HPM speed_change: op_speed=0 ddr=0 -> reconfiguring PLL to 800 Mbps
+[1658855000] SCM speed_change: op_speed=0 ddr=0 -> reconfiguring PLL to 800 Mbps
+  PASS: link reaches Operational (both sides) after base->operational speed switch
+  PASS: speed switch occurred (SCM op_speed = x16/400MHz)
+  PASS: operating at 800 Mbps bit rate (PLL reconfigured)
+  PASS: LL GPIO SCM->HPM at operational rate
+  PASS: LL GPIO HPM->SCM at operational rate
+  PASS: NL GPIO SCM->HPM
+  PASS: UART0 TXD level SCM->HPM (low)
+  PASS: UART0 TXD level SCM->HPM (high)
+  PASS: I2C START relayed SCM->HPM (regenerated)
+  PASS: Data channel read completion returned
+  PASS: Data channel read data == HPM mem[4]
+
+PASS 11/11  (LTPI dual-rate SCM<->HPM: 25MHz train -> 400MHz DDR operational)
+sim/tb_ltpi_link.sv:185: $finish called at 1899065000 (1ps)

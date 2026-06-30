@@ -1,0 +1,11 @@
+[options]
+mode prove
+depth 8
+[engines]
+smtbmc boolector
+[script]
+read_verilog -sv -formal ltpi_pkg.sv ltpi_data_chan.sv
+prep -top ltpi_data_chan
+[files]
+../rtl/ltpi_pkg.sv
+../rtl/ltpi_data_chan.sv

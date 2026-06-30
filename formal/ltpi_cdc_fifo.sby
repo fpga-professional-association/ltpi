@@ -1,0 +1,11 @@
+[options]
+mode prove
+depth 12
+[engines]
+smtbmc boolector
+[script]
+read_verilog -sv -formal ltpi_cdc_fifo.sv f_cdc_fifo.sv
+prep -top f_cdc_fifo
+[files]
+../rtl/ltpi_cdc_fifo.sv
+f_cdc_fifo.sv

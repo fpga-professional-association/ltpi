@@ -1,0 +1,88 @@
+# =============================================================================
+# ltpi_core.qsf  -  Quartus Prime Pro project for the symbol-parallel LTPI core
+#
+# Synthesizes ltpi_core (the System-Clock, one-symbol-per-clock datapath: frame
+# tx/rx + incremental CRC + pipelined 8b/10b + link FSM + channels + CSR).  This
+# is the timing-critical fabric that must keep up with the line rate via the J=10
+# SERDES: at 400 MHz DDR (800 Mbps) the parallel symbol clock is 80 MHz.  The
+# high-rate bit (de)serialization is the LVDS SERDES hard block (PHY), not synth-
+# esized here.  The whole symbol/app interface is virtual-pinned (core block).
+# =============================================================================
+set_global_assignment -name FAMILY "Cyclone 10 GX"
+set_global_assignment -name DEVICE 10CX220YF780E5G
+set_global_assignment -name TOP_LEVEL_ENTITY ltpi_core
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name SEARCH_PATH .
+
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_crc8.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_8b10b.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_frame_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_frame_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_link_fsm.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_gpio_chan.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_uart_chan.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_i2c_relay.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_data_chan.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_csr.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_core.sv
+
+set_global_assignment -name SDC_FILE ltpi_core.sdc
+set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
+
+# all ports except clk/rst_n are internal-block nets (virtual pins)
+set_instance_assignment -name VIRTUAL_PIN ON -to "tx_sym[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to tx_sym_valid
+set_instance_assignment -name VIRTUAL_PIN ON -to tx_sym_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to "rx_sym[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to rx_sym_valid
+set_instance_assignment -name VIRTUAL_PIN ON -to realign
+set_instance_assignment -name VIRTUAL_PIN ON -to rx_aligned
+set_instance_assignment -name VIRTUAL_PIN ON -to speed_change
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_speed[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to op_ddr
+set_instance_assignment -name VIRTUAL_PIN ON -to "ll_in[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ll_out[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "nl_in[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "nl_out[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to txd0
+set_instance_assignment -name VIRTUAL_PIN ON -to txd1
+set_instance_assignment -name VIRTUAL_PIN ON -to rts0
+set_instance_assignment -name VIRTUAL_PIN ON -to rts1
+set_instance_assignment -name VIRTUAL_PIN ON -to rxd0
+set_instance_assignment -name VIRTUAL_PIN ON -to rxd1
+set_instance_assignment -name VIRTUAL_PIN ON -to cts0
+set_instance_assignment -name VIRTUAL_PIN ON -to cts1
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_evt_det[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_evt_code[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen_code[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen_done[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_scl_stretch[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_req
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_addr[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_wdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_be[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_tag[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_ack
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_cpl
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_rdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_status[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_address[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_read
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_writedata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_byteenable[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_readdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_waitrequest
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_readdatavalid
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_addr[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_read
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_wdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_rdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to "link_state[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to operational
+set_instance_assignment -name VIRTUAL_PIN ON -to link_aligned

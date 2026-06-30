@@ -1,0 +1,55 @@
+name: verify
+
+# Formal proofs (yosys + SymbiYosys + boolector) and the Icarus simulation run on every
+# push / PR. Quartus synthesis + STA is proprietary and Windows-hosted, so it is NOT run
+# in CI — see syn/altera/README.md to reproduce it locally.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  formal-and-sim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache OSS CAD Suite
+        id: cache-oss
+        uses: actions/cache@v4
+        with:
+          path: ~/eda-tools/oss-cad-suite
+          key: oss-cad-suite-v1
+
+      - name: Install OSS CAD Suite (yosys + SymbiYosys + boolector + iverilog)
+        if: steps.cache-oss.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/eda-tools && cd ~/eda-tools
+          URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/YosysHQ/oss-cad-suite-build/releases/latest \
+            | grep -oE '"browser_download_url": *"[^"]*linux-x64[^"]*\.tgz"' \
+            | head -1 | sed -E 's/.*"(https[^"]+)"/\1/')
+          echo "Downloading $URL"
+          curl -L --retry 3 -o oss.tgz "$URL"
+          tar xzf oss.tgz && rm oss.tgz
+
+      - name: Put the toolchain on PATH
+        run: echo "$HOME/eda-tools/oss-cad-suite/bin" >> "$GITHUB_PATH"
+
+      - name: Tool versions
+        run: yosys -V | head -1 && sby --version && iverilog -V | head -1
+
+      - name: Formal proofs (SymbiYosys — must end ALL GREEN)
+        run: |
+          cd formal && ./run_all.sh | tee /tmp/formal.log
+          grep -q "FORMAL: ALL GREEN" /tmp/formal.log
+
+      - name: Simulation (Icarus — must end PASS 11/11)
+        run: |
+          ./sim/run.sh | tee /tmp/sim.log
+          grep -q "PASS 11/11" /tmp/sim.log

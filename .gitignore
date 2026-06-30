@@ -1,0 +1,17 @@
+# simulation
+sim/*.vvp
+sim/*.vcd
+sim/iverilog.log
+# formal working directories (regenerate with formal/run_all.sh)
+formal/ltpi_*/
+formal/*/engine_*/
+# Quartus staging is on the Windows side (/mnt/c/ltpi_quartus); nothing local
+output_files/
+*.qws
+*.rpt
+*.jdi
+*.pin
+*.sof
+
+# Windows download artifacts
+*:Zone.Identifier

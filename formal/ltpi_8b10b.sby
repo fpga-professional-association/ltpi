@@ -1,0 +1,15 @@
+[options]
+# pure combinational tautology over ALL inputs -> BMC depth 1 is complete
+mode bmc
+depth 1
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -sv -formal ltpi_8b10b.sv f_8b10b.sv
+prep -top f_8b10b
+
+[files]
+../rtl/ltpi_8b10b.sv
+f_8b10b.sv

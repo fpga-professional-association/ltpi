@@ -1,0 +1,11 @@
+[options]
+mode prove
+depth 6
+[engines]
+smtbmc boolector
+[script]
+read_verilog -sv -formal ltpi_gpio_chan.sv
+chparam -set NUM_NL 32 ltpi_gpio_chan
+prep -top ltpi_gpio_chan
+[files]
+../rtl/ltpi_gpio_chan.sv

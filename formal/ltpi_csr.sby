@@ -1,0 +1,11 @@
+[options]
+mode prove
+depth 6
+[engines]
+smtbmc boolector
+[script]
+read_verilog -sv -formal ltpi_pkg.sv ltpi_csr.sv
+prep -top ltpi_csr
+[files]
+../rtl/ltpi_pkg.sv
+../rtl/ltpi_csr.sv

@@ -1,0 +1,12 @@
+  ltpi_8b10b             (PASS, rc=0)
+  ltpi_frame             (PASS, rc=0)
+  ltpi_frame             (PASS, rc=0)
+  ltpi_cdc_fifo          (PASS, rc=0)
+  ltpi_link_fsm          (PASS, rc=0)
+  ltpi_link_fsm          (PASS, rc=0)
+  ltpi_gpio_chan         (PASS, rc=0)
+  ltpi_i2c_relay         (PASS, rc=0)
+  ltpi_data_chan         (PASS, rc=0)
+  ltpi_csr               (PASS, rc=0)
+===========================================================
+FORMAL: ALL GREEN

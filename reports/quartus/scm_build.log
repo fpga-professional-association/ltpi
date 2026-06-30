@@ -1,0 +1,25 @@
+==================================================================
+  Quartus build: ltpi_scm
+==================================================================
+--- Analysis & Synthesis ---
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK1
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+Warning (13024): Output pins are stuck at VCC or GND
+    Warning (13410): Pin "csr_ready" is stuck at VCC File: C:/ltpi_quartus/ltpi_scm_top.sv Line: 72
+    Warning (13410): Pin "link_state[3]" is stuck at GND File: C:/ltpi_quartus/ltpi_scm_top.sv Line: 74
+Info (17049): 132 registers lost all their fanouts during netlist optimizations.
+Info (21057): Implemented 2891 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 223 input pins
+    Info (21059): Implemented 219 output pins
+    Info (21061): Implemented 2429 logic cells
+    Info (21064): Implemented 20 RAM segments
+Info: Successfully synthesized partition
+Info: Saving post-synthesis snapshots for 1 partition(s)
+Info: Quartus Prime Synthesis was successful. 0 errors, 5 warnings
+    Info: Peak virtual memory: 815 megabytes
+    Info: Processing ended: Mon Jun 29 20:32:25 2026
+    Info: Elapsed time: 00:00:08
+    Info: System process ID: 30400
+SYNTH OK (ltpi_scm, syn-only)

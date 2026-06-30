@@ -1,0 +1,67 @@
+# =============================================================================
+# ltpi_scm.qsf  -  Quartus Prime Pro project for the LTPI SCM endpoint
+# Device-agnostic RTL; the only vendor-specific file is altera/ltpi_io_altera.sv.
+# All modules are pulled in via `include from ltpi_scm_top.sv (include-guarded),
+# so only the top is listed and SEARCH_PATH resolves the includes.
+# =============================================================================
+set_global_assignment -name FAMILY "Cyclone 10 GX"
+set_global_assignment -name DEVICE 10CX220YF780E5G
+set_global_assignment -name TOP_LEVEL_ENTITY ltpi_scm_top
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+
+# include search paths (staged layout: top-level + altera/)
+set_global_assignment -name SEARCH_PATH .
+
+# source (top pulls in pkg + all leaf modules via `include)
+set_global_assignment -name SYSTEMVERILOG_FILE ltpi_scm_top.sv
+
+# timing
+set_global_assignment -name SDC_FILE ltpi.sdc
+
+set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
+
+set_instance_assignment -name VIRTUAL_PIN ON -to "ll_in[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ll_out[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "nl_in[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "nl_out[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to txd0
+set_instance_assignment -name VIRTUAL_PIN ON -to txd1
+set_instance_assignment -name VIRTUAL_PIN ON -to rts0
+set_instance_assignment -name VIRTUAL_PIN ON -to rts1
+set_instance_assignment -name VIRTUAL_PIN ON -to rxd0
+set_instance_assignment -name VIRTUAL_PIN ON -to rxd1
+set_instance_assignment -name VIRTUAL_PIN ON -to cts0
+set_instance_assignment -name VIRTUAL_PIN ON -to cts1
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_evt_det[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_evt_code[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen_code[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_regen_done[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "i2c_scl_stretch[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_req
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_addr[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_wdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_be[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_tag[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_ack
+set_instance_assignment -name VIRTUAL_PIN ON -to ini_cpl
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_rdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "ini_status[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_address[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_read
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_writedata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_byteenable[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "avm_readdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_waitrequest
+set_instance_assignment -name VIRTUAL_PIN ON -to avm_readdatavalid
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_addr[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_read
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_write
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_wdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "csr_rdata[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to csr_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to "link_state[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to operational
+set_instance_assignment -name VIRTUAL_PIN ON -to link_aligned
