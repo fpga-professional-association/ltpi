@@ -74,43 +74,14 @@ jobs:
           grep -q "PASS 11/11" /tmp/sim.log
 
   # ----------------------------------------------------------------------------
-  # Warm the OSS CAD Suite cache once so the formal matrix below restores it
-  # instead of every matrix leg re-downloading (~700 MB) on a cold cache.
-  # ----------------------------------------------------------------------------
-  toolchain:
-    name: OSS CAD Suite (cache warm)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Cache OSS CAD Suite
-        id: cache-oss
-        uses: actions/cache@v4
-        with:
-          path: ~/eda-tools/oss-cad-suite
-          key: oss-cad-suite-v1
-
-      - name: Download OSS CAD Suite (yosys + SymbiYosys + boolector)
-        if: steps.cache-oss.outputs.cache-hit != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p ~/eda-tools && cd ~/eda-tools
-          URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
-            https://api.github.com/repos/YosysHQ/oss-cad-suite-build/releases/latest \
-            | grep -oE '"browser_download_url": *"[^"]*linux-x64[^"]*\.tgz"' \
-            | head -1 | sed -E 's/.*"(https[^"]+)"/\1/')
-          echo "Downloading $URL"
-          curl -L --retry 3 -o oss.tgz "$URL"
-          tar xzf oss.tgz && rm oss.tgz
-
-  # ----------------------------------------------------------------------------
   # Formal proofs: one job per .sby so each proof shows as its own check. Each
-  # restores the warmed cache and must end PASS (no FAIL/ERROR/UNKNOWN tasks).
+  # leg is self-sufficient — it restores the OSS CAD Suite from cache, or
+  # downloads it (~700 MB, a few seconds on the runner) on a cache miss. This
+  # avoids a fragile cross-job cache dependency; after the first run every leg
+  # hits the warm cache. Each proof must end PASS (no FAIL/ERROR/UNKNOWN tasks).
   # ----------------------------------------------------------------------------
   formal:
     name: Formal
-    needs: toolchain
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -128,12 +99,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore OSS CAD Suite
-        uses: actions/cache/restore@v4
+      - name: Cache OSS CAD Suite
+        id: cache-oss
+        uses: actions/cache@v4
         with:
           path: ~/eda-tools/oss-cad-suite
           key: oss-cad-suite-v1
-          fail-on-cache-miss: true
+
+      - name: Download OSS CAD Suite (yosys + SymbiYosys + boolector) on cache miss
+        if: steps.cache-oss.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/eda-tools && cd ~/eda-tools
+          URL=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/YosysHQ/oss-cad-suite-build/releases/latest \
+            | grep -oE '"browser_download_url": *"[^"]*linux-x64[^"]*\.tgz"' \
+            | head -1 | sed -E 's/.*"(https[^"]+)"/\1/')
+          echo "Downloading $URL"
+          curl -L --retry 3 -o oss.tgz "$URL"
+          tar xzf oss.tgz && rm oss.tgz
 
       - name: Put the toolchain on PATH
         run: echo "$HOME/eda-tools/oss-cad-suite/bin" >> "$GITHUB_PATH"

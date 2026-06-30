@@ -92,7 +92,7 @@ The design is checked **three independent ways**:
 
 ```bash
 # Simulation (Icarus): live SCM<->HPM link, all channels
-sim/run.sh                       # -> "PASS 9/9"
+sim/run.sh                       # -> "PASS 11/11"
 
 # Formal (OSS CAD Suite: yosys + SymbiYosys + boolector)
 source tools/env.sh
