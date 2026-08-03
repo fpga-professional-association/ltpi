@@ -1,11 +1,23 @@
+[tasks]
+bmc
+prove
+cover
+
 [options]
-mode prove
-depth 6
+bmc:   mode bmc
+bmc:   depth 25
+prove: mode prove
+prove: depth 12
+cover: mode cover
+cover: depth 25
+
 [engines]
-smtbmc boolector
+smtbmc bitwuzla
+
 [script]
-read_verilog -sv -formal ltpi_pkg.sv ltpi_csr.sv
+read -formal -sv ltpi_pkg.sv ltpi_csr.sv
 prep -top ltpi_csr
+
 [files]
 ../rtl/ltpi_pkg.sv
 ../rtl/ltpi_csr.sv

@@ -1,19 +1,45 @@
+# Formal verification of the LTPI link training FSM, both roles.
+#
+#   sby -f ltpi_link_fsm.sby                 # all tasks
+#   sby -f ltpi_link_fsm.sby scm_prove       # single task
+#
+# Proof tasks run with the real spec thresholds (255 detect frames, 1ms
+# advertise timer, ...). Cover tasks shrink the thresholds via chparam so the
+# reachability traces stay shallow - covers check FSM wiring, not timing.
+
 [tasks]
-prove
-cover
+scm_bmc    scm bmc
+scm_prove  scm prove
+hpm_bmc    hpm bmc
+hpm_prove  hpm prove
+scm_cover  scm cover
+hpm_cover  hpm cover
 
 [options]
+bmc:   mode bmc
+bmc:   depth 30
 prove: mode prove
-prove: depth 12
+prove: depth 20
 cover: mode cover
-cover: depth 360       # 255 Detect TX frames + Speed/Advertise/Config + skew
+cover: depth 80
 
 [engines]
-smtbmc boolector
+smtbmc bitwuzla
 
 [script]
-read_verilog -sv -formal ltpi_pkg.sv ltpi_link_fsm.sv
-chparam -set ADVERTISE_CYCLES 2 ltpi_link_fsm
+read -formal -sv ltpi_pkg.sv ltpi_link_fsm.sv
+hpm: chparam -set ROLE_SCM 0 ltpi_link_fsm
+cover: chparam -set DETECT_MIN_TX 4 ltpi_link_fsm
+cover: chparam -set DETECT_MIN_RX 3 ltpi_link_fsm
+cover: chparam -set ALIGN_MIN_RX 2 ltpi_link_fsm
+cover: chparam -set SPEED_SCM_MIN_TX 2 ltpi_link_fsm
+cover: chparam -set SPEED_HPM_MIN_RX 2 ltpi_link_fsm
+cover: chparam -set SPEED_TIMEOUT_TX 8 ltpi_link_fsm
+cover: chparam -set ADV_MIN_CYCLES 4 ltpi_link_fsm
+cover: chparam -set ADV_ALIGN_TIMEOUT 6 ltpi_link_fsm
+cover: chparam -set ADV_MIN_RX 2 ltpi_link_fsm
+cover: chparam -set CFG_MAX_TX 4 ltpi_link_fsm
+cover: chparam -set ACC_MAX_TX 3 ltpi_link_fsm
 prep -top ltpi_link_fsm
 
 [files]

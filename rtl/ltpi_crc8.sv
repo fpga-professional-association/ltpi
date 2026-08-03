@@ -1,49 +1,67 @@
-// =============================================================================
-// ltpi_crc8.sv  -  CRC-8 for LTPI frames (spec Sec 2.4)
-//
-//   Polynomial : x^8 + x^2 + x^1 + 1   (0x07)
-//   Init value : 0x00
-//   Coverage   : all payload bytes after the comma symbol (frame bytes 1..14),
-//                MSB-first, result placed in frame byte 15.
-//
-// Pure combinational.  Exposes:
-//   - crc8_step()   : fold one byte into a running CRC
-//   - this module   : CRC over the packed 14-byte payload (byte1 = LSBytes[7:0])
-// =============================================================================
-`ifndef LTPI_CRC8_SV
-`define LTPI_CRC8_SV
-`include "ltpi_pkg.sv"
+// Streaming CRC-8 generator/checker for LTPI frames.
+// Poly x^8 + x^2 + x + 1, initial value 0 (spec section 2.4). The CRC covers
+// the payload bytes after the comma symbol; a receiver that also feeds the
+// received CRC byte through ends at 0 exactly when the frame is intact.
+import ltpi_pkg::*;
 
-// One-byte CRC-8 step, MSB-first, poly 0x07.
-function automatic logic [7:0] crc8_step(input logic [7:0] crc, input logic [7:0] data);
-  logic [7:0] c;
-  begin
-    c = crc;
-    for (int i = 7; i >= 0; i--) begin
-      logic fb;
-      fb = c[7] ^ data[i];
-      c  = {c[6:0], 1'b0};
-      if (fb) c = c ^ 8'h07;
-    end
-    crc8_step = c;
-  end
-endfunction
-
-module ltpi_crc8 #(
-  parameter int N = ltpi_pkg::PAYLOAD_BYTES   // number of bytes covered
-) (
-  input  logic [N*8-1:0] data,   // data[7:0] is the FIRST byte folded (frame byte 1)
-  output logic [7:0]     crc
+module ltpi_crc8 (
+    input  logic       clk,
+    input  logic       rst,
+    input  logic       clear,   // start of a new frame
+    input  logic       en,      // consume one payload byte
+    input  logic [7:0] data,
+    output logic [7:0] crc
 );
-  // always @(*) (not always_comb): iverilog mis-schedules an always_comb that
-  // calls a function when `data` is driven by an internal reg; equivalent for
-  // synthesis/formal.
-  logic [7:0] c;
-  always @(*) begin
-    c = 8'h00;
-    for (int b = 0; b < N; b++)
-      c = crc8_step(c, data[b*8 +: 8]);
-    crc = c;
-  end
-endmodule
+
+`include "ltpi_crc8_func.svh"
+
+    always_ff @(posedge clk) begin
+        if (rst || clear)
+            crc <= 8'h00;
+        else if (en)
+            crc <= crc8_update(crc, data);
+    end
+
+`ifdef FORMAL
+    logic f_past_valid = 1'b0;
+    always_ff @(posedge clk)
+        f_past_valid <= 1'b1;
+
+    initial assume (rst);
+
+    (* anyseq *) logic [7:0] f_any;
+
+    // Zero-remainder theorem: for ANY running CRC value, absorbing a byte
+    // equal to the CRC itself yields 0. This is what makes the receiver's
+    // "residue == 0" check equivalent to "stored CRC == computed CRC".
+    always_comb
+        assert (crc8_update(f_any, f_any) == 8'h00);
+
+    // The CRC of a single zero byte from init state is 0 (poly has no init
+    // XOR), per spec: "The polynomial initial value is defined as '0'".
+    always_comb
+        assert (crc8_update(8'h00, 8'h00) == 8'h00);
+
+    // Known-answer check baked in as a proof: CRC8/0x07 of "123456789" is
+    // 0xF4 (standard CRC-8 check value).
+    always_comb begin : f_known_answer
+        logic [7:0] c;
+        c = 8'h00;
+        c = crc8_update(c, "1"); c = crc8_update(c, "2"); c = crc8_update(c, "3");
+        c = crc8_update(c, "4"); c = crc8_update(c, "5"); c = crc8_update(c, "6");
+        c = crc8_update(c, "7"); c = crc8_update(c, "8"); c = crc8_update(c, "9");
+        assert (c == 8'hF4);
+    end
+
+    // Register behavior: clear dominates, and crc only changes on en.
+    always_ff @(posedge clk) begin
+        if (f_past_valid && !$past(rst)) begin
+            if ($past(clear))
+                assert (crc == 8'h00);
+            else if (!$past(en))
+                assert (crc == $past(crc));
+        end
+    end
 `endif
+
+endmodule

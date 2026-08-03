@@ -1,0 +1,21 @@
+[tasks]
+bmc
+prove
+
+[options]
+bmc:   mode bmc
+bmc:   depth 20
+prove: mode prove
+prove: depth 10
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal -sv ltpi_pkg.sv ltpi_crc8.sv
+prep -top ltpi_crc8
+
+[files]
+../rtl/ltpi_pkg.sv
+../rtl/ltpi_crc8.sv
+../rtl/ltpi_crc8_func.svh

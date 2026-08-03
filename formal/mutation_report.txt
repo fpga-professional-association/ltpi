@@ -1,0 +1,96 @@
+ltpi_crc8.sv: 0/0 killed
+  ltpi_gpio_channel.sv   eq->neq      -> KILLED | slice_q <= (tx_frame_counter + 1'b1 == 8'd0)
+  ltpi_gpio_channel.sv   eq->neq      -> KILLED | if ((i / 16) == 32'(rx_slice))
+  ltpi_gpio_channel.sv   and->or      -> SURVIVED | assign rx_good = rx_frame_valid && rx_crc_ok;
+  ltpi_gpio_channel.sv   plus->minus  -> SURVIVED | tx_frame_counter <= tx_frame_counter + 1'b1;
+  ltpi_gpio_channel.sv   plus->minus  -> SURVIVED | slice_q <= (tx_frame_counter + 1'b1 == 8'd0)
+  ltpi_gpio_channel.sv   lt->le       -> SURVIVED | for (i = 0; i < 16; i = i + 1)
+  ltpi_gpio_channel.sv   lt->le       -> SURVIVED | if (32'(slice_q) * 16 + i < NL_TOTAL)
+  ltpi_gpio_channel.sv   lt->le       -> SURVIVED | for (i = 0; i < NL_TOTAL; i = i + 1)
+ltpi_gpio_channel.sv: 2/8 killed
+  ltpi_uart_channel.sv   neq->eq      -> SURVIVED | if (idx != 2'd2)
+  ltpi_uart_channel.sv   neq->eq      -> KILLED | if (ridx != 2'd2)
+  ltpi_uart_channel.sv   and->or      -> KILLED | assign rx_good = rx_frame_valid && rx_crc_ok;
+  ltpi_uart_channel.sv   plus->minus  -> KILLED | idx <= idx + 1'b1;
+  ltpi_uart_channel.sv   plus->minus  -> KILLED | ridx <= ridx + 1'b1;
+ltpi_uart_channel.sv: 4/5 killed
+  ltpi_frame_tx.sv       plus->minus  -> KILLED | byte_cnt   <= byte_cnt + 1'b1;   // wraps 15 -> 0
+ltpi_frame_tx.sv: 1/1 killed
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | assign rx_good_detect = rx_good && rx_frame_type == FRAME_LI
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | assign rx_good_cfg    = rx_good && rx_frame_type == FRAME_CO
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | || rx_frame_type == FRAME_OP_DATA);
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | || (state == ST_OPERATIONAL);
+  ltpi_link_fsm.sv       eq->neq      -> SURVIVED | else if (state == ST_DETECT && rx_frame_valid && !rx_crc_ok)
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | end else if (nstate == ST_DETECT_ALIGN && state != ST_DETECT
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | end else if ((state == ST_DETECT || state == ST_DETECT_ALIGN
+  ltpi_link_fsm.sv       eq->neq      -> KILLED | end else if (nstate == ST_DETECT_ALIGN && state != ST_DETECT
+  ltpi_link_fsm.sv       neq->eq      -> KILLED | else if (tx_frame_done && tx_cnt != '1)
+  ltpi_link_fsm.sv       neq->eq      -> KILLED | if (rst || (state != ST_ADV_ALIGN && state != ST_ADV))
+  ltpi_link_fsm.sv       neq->eq      -> KILLED | if (s != 0 && (s & (s - 1)) == 0 && (s & local_caps) == s)
+  ltpi_link_fsm.sv       and->or      -> KILLED | assign rx_good = rx_frame_valid && rx_crc_ok;
+  ltpi_link_fsm.sv       and->or      -> SURVIVED | assign rx_good_adv    = rx_good && rx_frame_type == FRAME_AD
+  ltpi_link_fsm.sv       and->or      -> KILLED | assign rx_good_op     = rx_good && (rx_frame_type == FRAME_O
+  ltpi_link_fsm.sv       and->or      -> KILLED | assign rx_lost_event = rx_frame_valid && !rx_expected;
+  ltpi_link_fsm.sv       and->or      -> SURVIVED | && rx_cnt >= 4'(DETECT_MIN_RX))
+  ltpi_link_fsm.sv       and->or      -> KILLED | : (rx_good_cfg && rx_cfg_match);
+  ltpi_link_fsm.sv       and->or      -> SURVIVED | if (!ROLE_SCM && rx_good_cfg && rx_cfg_match)
+  ltpi_link_fsm.sv       and->or      -> KILLED | else if (state == ST_DETECT && rx_frame_valid && !rx_crc_ok)
+  ltpi_link_fsm.sv       and->or      -> KILLED | if (rst || (state != ST_ADV_ALIGN && state != ST_ADV))
+  ltpi_link_fsm.sv       and->or      -> KILLED | if (s != 0 && (s & (s - 1)) == 0 && (s & local_caps) == s)
+  ltpi_link_fsm.sv       and->or      -> KILLED | && nstate == ST_SPEED) begin
+  ltpi_link_fsm.sv       plus->minus  -> SURVIVED | rx_cnt <= rx_cnt + 1'b1;
+  ltpi_link_fsm.sv       ge->gt       -> SURVIVED | assign detect_done = (tx_cnt >= TXW'(DETECT_MIN_TX)
+ltpi_link_fsm.sv: 18/24 killed
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | assign rx_is_data = (rx_event == I2C_EV_DATA0) || (rx_event 
+  ltpi_i2c_relay.sv      eq->neq      -> KILLED | assign ok_change = sent_once && (tx_event == tx_event_q);
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | && rx_event == I2C_EV_DATA_RCVD;
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | assign lose_arb = !ARB_PRIORITY && initiator && state == S_S
+  ltpi_i2c_relay.sv      eq->neq      -> KILLED | if (rx_new && rx_event == I2C_EV_START_RCVD) begin
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | rbit_q      <= (rx_event == I2C_EV_DATA1);
+  ltpi_i2c_relay.sv      eq->neq      -> KILLED | if (rx_new && rx_event == I2C_EV_IDLE) begin
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | rw_read <= (state == S_LDATA)
+  ltpi_i2c_relay.sv      eq->neq      -> KILLED | || (state == S_RDATA_RCVD)
+  ltpi_i2c_relay.sv      eq->neq      -> SURVIVED | || (!initiator && state == S_WAIT && !dir_local)
+  ltpi_i2c_relay.sv      eq->neq      -> KILLED | || (!initiator && state == S_START);
+  ltpi_i2c_relay.sv      neq->eq      -> KILLED | assign rx_new = rxe && (rx_event != prev_rx_ev);
+  ltpi_i2c_relay.sv      and->or      -> KILLED | assign rx_new = rxe && (rx_event != prev_rx_ev);
+  ltpi_i2c_relay.sv      and->or      -> KILLED | assign bit_done_local  = (state == S_LDATA) && rx_new
+  ltpi_i2c_relay.sv      and->or      -> SURVIVED | && rx_event == I2C_EV_DRCVD_ECHO;
+  ltpi_i2c_relay.sv      and->or      -> KILLED | && rx_new && rx_event == I2C_EV_START;
+  ltpi_i2c_relay.sv      and->or      -> KILLED | if (start_det && !initiator && state != S_IDLE)
+  ltpi_i2c_relay.sv      and->or      -> KILLED | if (rx_new && rx_event == I2C_EV_START_RCVD) begin
+  ltpi_i2c_relay.sv      and->or      -> KILLED | end else if (!initiator && rx_new
+  ltpi_i2c_relay.sv      and->or      -> KILLED | && rx_event == I2C_EV_STOP) begin
+  ltpi_i2c_relay.sv      and->or      -> SURVIVED | if (rx_new && rx_event == I2C_EV_IDLE) begin
+  ltpi_i2c_relay.sv      and->or      -> SURVIVED | || (initiator && state == S_START && stretch_armed)
+  ltpi_i2c_relay.sv      and->or      -> SURVIVED | || (!initiator && state == S_WAIT && !dir_local)
+  ltpi_i2c_relay.sv      and->or      -> KILLED | bus_start_gen = (!initiator && state == S_START);
+ltpi_i2c_relay.sv: 14/24 killed
+
+==== MUTATION COVERAGE ====
+applied 62, killed 39, coverage 62.9%
+
+Survivors (bugs the property set cannot see):
+  ltpi_gpio_channel.sv: [and->or] assign rx_good = rx_frame_valid && rx_crc_ok;
+  ltpi_gpio_channel.sv: [plus->minus] tx_frame_counter <= tx_frame_counter + 1'b1;
+  ltpi_gpio_channel.sv: [plus->minus] slice_q <= (tx_frame_counter + 1'b1 == 8'd0)
+  ltpi_gpio_channel.sv: [lt->le] for (i = 0; i < 16; i = i + 1)
+  ltpi_gpio_channel.sv: [lt->le] if (32'(slice_q) * 16 + i < NL_TOTAL)
+  ltpi_gpio_channel.sv: [lt->le] for (i = 0; i < NL_TOTAL; i = i + 1)
+  ltpi_uart_channel.sv: [neq->eq] if (idx != 2'd2)
+  ltpi_link_fsm.sv: [eq->neq] else if (state == ST_DETECT && rx_frame_valid && !rx_crc_ok)
+  ltpi_link_fsm.sv: [and->or] assign rx_good_adv    = rx_good && rx_frame_type == FRAME_ADVERTISE;
+  ltpi_link_fsm.sv: [and->or] && rx_cnt >= 4'(DETECT_MIN_RX))
+  ltpi_link_fsm.sv: [and->or] if (!ROLE_SCM && rx_good_cfg && rx_cfg_match)
+  ltpi_link_fsm.sv: [plus->minus] rx_cnt <= rx_cnt + 1'b1;
+  ltpi_link_fsm.sv: [ge->gt] assign detect_done = (tx_cnt >= TXW'(DETECT_MIN_TX)
+  ltpi_i2c_relay.sv: [eq->neq] assign rx_is_data = (rx_event == I2C_EV_DATA0) || (rx_event == I2C_EV_
+  ltpi_i2c_relay.sv: [eq->neq] && rx_event == I2C_EV_DATA_RCVD;
+  ltpi_i2c_relay.sv: [eq->neq] assign lose_arb = !ARB_PRIORITY && initiator && state == S_START
+  ltpi_i2c_relay.sv: [eq->neq] rbit_q      <= (rx_event == I2C_EV_DATA1);
+  ltpi_i2c_relay.sv: [eq->neq] rw_read <= (state == S_LDATA)
+  ltpi_i2c_relay.sv: [eq->neq] || (!initiator && state == S_WAIT && !dir_local)
+  ltpi_i2c_relay.sv: [and->or] && rx_event == I2C_EV_DRCVD_ECHO;
+  ltpi_i2c_relay.sv: [and->or] if (rx_new && rx_event == I2C_EV_IDLE) begin
+  ltpi_i2c_relay.sv: [and->or] || (initiator && state == S_START && stretch_armed)
+  ltpi_i2c_relay.sv: [and->or] || (!initiator && state == S_WAIT && !dir_local)

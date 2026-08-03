@@ -1,0 +1,18 @@
+# LTPI constraints - Lattice (Diamond .lpf), ECP5 example.
+# Pick ONE frequency block matching the negotiated operating point.
+
+# --- 200 MHz SDR (200 Mbps) ---
+# FREQUENCY NET "ltpi_clk" 200.000000 MHz ;
+
+# --- 400 MHz SDR (400 Mbps) / 400 MHz DDR (800 Mbps, ECP5-5G/Avant) ---
+FREQUENCY NET "ltpi_clk" 400.000000 MHz ;
+
+# LVDS input/output pairs (true LVDS on ECP5 left/right banks)
+IOBUF PORT "LTPI_RX_DAT" IO_TYPE=LVDS25 DIFFRESISTOR=100 ;
+IOBUF PORT "LTPI_RX_CLK" IO_TYPE=LVDS25 DIFFRESISTOR=100 ;
+IOBUF PORT "LTPI_TX_DAT" IO_TYPE=LVDS25 ;
+IOBUF PORT "LTPI_TX_CLK" IO_TYPE=LVDS25 ;
+
+# Center the DDR capture window with DELAYG (see ltpi_lvds_io.sv); verify
+# with a post-route trace analysis at 400 MHz DDR - this operating point
+# needs the -8 speed grade or Avant.

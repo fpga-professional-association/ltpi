@@ -1,136 +1,197 @@
-# LTPI IP Core — DC-SCM 2.0 LVDS Tunneling Protocol & Interface (SCM + HPM)
+# Formally Verified LTPI Implementation (OCP DC-SCM 2.0)
 
-[![verify](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml/badge.svg)](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml)
+SystemVerilog implementation, machine-checked formal proofs, simulation, and
+UVM testbench for the **LVDS Tunneling Protocol & Interface (LTPI)** from the
+OCP DC-SCM 2.0 specification (`../spec/OCP_DC-SCM_2.0_LTPI_v1.0.pdf`).
 
-A device-agnostic SystemVerilog implementation of the **OCP DC-SCM 2.0 LTPI**
-(LVDS Tunneling Protocol & Interface, Revision 1.0) for **both link endpoints** —
-the **SCM** (Secure Control Module, drives link training) and the **HPM** (Host
-Processor Module, responds). LTPI tunnels low-speed platform-management signals
-(GPIO, UART, I2C/SMBus, a memory-mapped Data channel) between the DC-SCM and the
-host board over a single source-synchronous LVDS serial pair per direction, using
-8b/10b-framed 16-symbol frames.
+Targets **both Altera/Intel and Lattice FPGAs** (vendor-portable RTL + thin
+I/O wrappers) at **200 MHz SDR (200 Mbps), 400 MHz SDR (400 Mbps), or
+400 MHz DDR (800 Mbps)** — the capability word `CAPS_DEFAULT` advertises all
+three and training negotiates the fastest common rate.
 
-**Dual-rate**: the link trains at the **25 MHz base** (SDR), then switches to the
-negotiated **operational rate — up to 400 MHz DDR (800 Mbps)** — exactly as the
-spec intends (Fig 19). The high-rate bit (de)serialization is done by a **J=10
-SERDES**, so the **symbol-parallel core runs in the fabric at the parallel symbol
-clock** (line rate / 10 = 80 MHz at 400 MHz DDR), bridged by **asynchronous CDC
-FIFOs** to the System Clock. Both roles are the *same* parameterized core
-(`ROLE = SCM | HPM`); the only device-specific block is the LVDS SERDES + IOPLL
-in `ltpi_phy`.
+## Layout
 
-The design is checked **three independent ways**:
+```
+rtl/   ltpi_pkg.sv           constants, enums, capability words
+       ltpi_crc8_func.svh    CRC-8 x^8+x^2+x+1 (shared include)
+       ltpi_crc8.sv          streaming CRC generator/checker
+       ltpi_frame_rx.sv      16-byte frame assembly + CRC + classify
+       ltpi_frame_tx.sv      frame serializer (always emits valid CRC)
+       ltpi_link_fsm.sv      link training/config/operational FSM (SCM+HPM)
+       ltpi_gpio_channel.sv  LL GPIO (every frame) + NL GPIO (N-frame mux)
+       ltpi_uart_channel.sv  UART 3x-oversample tunneling + RTS/CTS
+       ltpi_i2c_relay.sv     I2C/SMBus event relay w/ clock stretching
+       ltpi_phy.sv           SDR/DDR serdes, comma hunt, DDR bitslip
+       ltpi_top.sv           full endpoint: PHY+framer+FSM+channels
+       vendor/               ALTDDIO / ODDRX1F wrappers, SDC + LPF constraints
+formal/  *.sby               SymbiYosys proofs (see table below)
+         ltpi_loopback.sv    SCM+HPM composition proof
+sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, self-checking
+       render_waveform.py    VCD -> timing-diagram PNG
+uvm/   ltpi_if.sv, ltpi_uvm_pkg.sv, tb_uvm_top.sv, run_{questa,vcs,xcelium}
+```
 
-| Method | Tool | Result |
+## Proof suites (all PASS)
+
+| Suite | Tasks | What is proven |
 |---|---|---|
-| **Formal** | yosys 0.66 + SymbiYosys + boolector | **ALL GREEN** — 8 configs / 10 proof tasks: 8b/10b round-trip & DC-balance, **frame-layer round-trip + incremental CRC**, **CDC-FIFO safety**, link-FSM safety (k-induction) **and reachability to Operational**, GPIO/I2C/Data/CSR safety |
-| **Simulation** | Icarus Verilog (live dual-rate SCM↔HPM link) | **11 / 11 PASS** — trains at 25 MHz, **switches to 400 MHz DDR**, re-aligns, reaches Operational, then LL+NL GPIO, UART, I2C event relay, Data-channel Avalon read **at the operational rate** |
-| **Synthesis / STA** | Altera Quartus Prime Pro 25.3, Cyclone 10 GX `10CX220YF780E5G` | **Symbol-parallel core meets timing at 100 MHz** (+1.0 ns slack, Fmax ≈ 111 MHz) — comfortably above the **80 MHz parallel clock** that 400 MHz DDR requires; 1,147 ALMs (1 %), 1,357 regs, 0 RAM/DSP. The high-rate bit SERDES is the Cyclone 10 GX LVDS SERDES hard block (≤1.434 Gbps) |
+| `ltpi_crc8` | bmc, prove | zero-remainder theorem, 0xF4 known answer, register semantics |
+| `ltpi_frame_rx` | bmc, prove, cover | 16-byte cadence, CRC accumulator isolation, alignment reset; covers construct a real CRC-valid frame |
+| `ltpi_frame_tx` | bmc, prove, cover | **every emitted frame carries a correct CRC** (shadow-CRC refinement), legal comma, cadence |
+| `ltpi_link_fsm` | {scm,hpm} × {bmc, prove, cover} | P1–P12: state validity, handshake-gated Operational entry, Table 37/38/42/43/47 exit disciplines, one-hot supported speed select, counter bounds |
+| `ltpi_gpio_channel` | bmc, prove, cover | hold-on-CRC-error, exact NL slice addressing (no cross-slice writes), TX mux correctness incl. partial last slice |
+| `ltpi_uart_channel` | bmc, prove, cover | capture order D[0]=oldest, in-order replay, hold-on-error |
+| `ltpi_i2c_relay` | {pri,sec} × {bmc, prove, cover} | R1–R10: legal events, **stretch whenever awaiting the far side or deferring**, open-drain integrity (a tunneled '1' is never pulled low), full-handshake-before-next-bit, Stop discipline, arbitration back-off, Data-Received-only-after-real-SCL-edge (target stretch safe); covers: initiator round trip on EITHER side, remote bit, ACK slot, read decode, deferred-then-claimed START |
+| `ltpi_i2c_loopback` | bmc, prove, cover | **two-relay composition**: bus-mastership mutual exclusion proven unbounded (never two active initiators), responder-event lemmas; covers: **HPM-initiated transaction (the SPDM response path)**, defer-then-claim, simultaneous-start race resolved by priority |
+| `ltpi_phy` | {tx,rx} × {bmc, prove, cover} | serializer order/losslessness, RX byte = exact wire window, comma-first after alignment, DDR odd-offset bitslip, realign |
+| `ltpi_loopback` | bmc, prove, cover | **SCM↔HPM composition**: L1–L4 + T1–T3 — Accept implies Configure happened, HPM-Operational implies SCM-Operational, **speed agreement** (both sides always select the same one-hot mutually-supported speed, incl. the adopt-peer-select path), DDR only when both capable; covers: full bring-up, 400 MHz DDR negotiation, 200 MHz SDR fallback |
 
----
+Run everything: activate `..\..\oss-cad-suite\environment.ps1`, then
+`sby -f <suite>.sby` in `formal/`.
 
-## What it implements (spec coverage)
+### Spec-level findings closed by this implementation
 
-- **Link state machine** (spec §4, Fig 27): **Link Detect → Link Speed → Advertise →
-  Configure (SCM) / Accept (HPM) → Operational**, with the exact frame counts and
-  timeouts (255 Detect TX, 7/3 consecutive correct RX, 3-frame alignment, 7/3 Speed,
-  ≥1 ms Advertise dwell, 31/15 Configure/Accept, 3/7 consecutive-lost link-loss),
-  highest-common speed selection, and SCM/HPM training-skew tolerance (Notes 2/3).
-- **8b/10b symbol layer** (§2.6): full IBM 5B/6B + 3B/4B codec with running disparity,
-  K28.5/K28.6/K28.7 commas, a 1-bit serializer, and a comma-aligning deserializer.
-- **16-symbol frames** (§3): Link Detect/Speed, Advertise/Configure/Accept, and
-  Operational I/O + Data frames, each with a **CRC-8** (poly `x⁸+x²+x+1`, init 0,
-  over bytes 1..14 — §2.4).
-- **Channels** tunneled in the I/O frame:
-  - **GPIO** (§2.2.1.1): 16 Low-Latency GPIOs every frame + Normal-Latency GPIOs
-    time-multiplexed 16/frame by the frame counter; hold-last on CRC error.
-  - **UART** (§2.2.1.2): 2 links, TXD/RXD 3× oversampled with RTS/CTS flow control.
-  - **I2C/SMBus** (§2.2.1.3): per-link event relay (Start/Stop/Data + echo/received
-    handshake, Table 10) with SCL clock-stretching and a single-owner bus drive.
-  - **Data channel** (§2.2.1.4): Avalon-MM Read/Write tunneling with Tag tracking,
-    Read/Write Completion and CRC-Error commands (Tables 12/13); on-demand Data
-    frames interleave the I/O-frame stream.
-- **CSR block** (§3.2, Table 36): link status/state/speed, local/remote capabilities,
-  platform IDs, per-stage RX/TX frame counters and error counters (RWC), and the
-  Link Control register (soft reset, retrain, auto/trigger Configure, channel resets).
+1. **Speed-select divergence** (link FSM composition proof): a side exiting
+   Link Detect via a received Link Speed frame may never have seen the
+   peer's capability word, so it must **adopt the Speed Select payload of
+   that frame** (Table 24) instead of computing its own — otherwise the two
+   sides can permanently disagree on speed. Implemented as sanitized
+   adoption.
+2. **I2C bidirectionality for SPDM** — LTPI 1.0 fixes the I2C controller
+   on the SCM side, but SPDM over MCTP/SMBus requires *both* endpoints to
+   master the bus (the SPDM responder initiates its own response
+   transfers). `ltpi_i2c_relay` therefore claims the initiator role **per
+   transaction** on either side, with deterministic simultaneous-start
+   arbitration (`ARB_PRIORITY`, SCM wins) and **START deferral via clock
+   stretching** for the losing/busy side — the same mechanism the spec
+   prescribes for a START racing a STOP. Clock stretching works in both
+   directions: the initiator's bus is held until the peer confirms
+   regeneration (R3), and a stretching target on the responder side simply
+   delays the real SCL edge that gates Data Received (R10), which
+   propagates back as initiator-side stretch. Mutual exclusion of the
+   mastership claim is proven unbounded in `ltpi_i2c_loopback`.
+3. **Event-change semantics**: LTPI events repeat in every frame ("sent
+   continuously until new event is generated"), so relay transitions must
+   fire on event *changes*, never levels — otherwise a responder
+   re-triggers forever on the repeated Start event. The Echo events exist
+   precisely to separate identical consecutive events; the relay keys every
+   protocol transition on `rx_new` (delivered value differs from the
+   previous delivered value).
 
----
+## Simulation (`sim/`)
 
-## Top-level datapath (spec Fig 19)
+`tb_ltpi_system.sv` connects two complete endpoints at the serial-bit level
+and self-checks: training to Operational on both sides, 0x8100 (400 MHz+DDR)
+negotiation, LL GPIO, NL GPIO (multi-frame mux), UART levels, the
+SCM-initiated I2C Start/Stop handshake with clock stretching, **and an
+HPM-initiated I2C transaction** (the SPDM response direction: HPM claims
+the bus, stretches awaiting Start Received, SCM regenerates the START).
+**ALL CHECKS PASSED** under Icarus:
 
-`ltpi_scm_top` / `ltpi_hpm_top` wrap `ltpi_phy` (LVDS SERDES + CDC FIFOs) +
-`ltpi_core` (the System-Clock, one-symbol-per-clock datapath):
-
-```
-                       ltpi_phy (PHY / SERDES domains)        ltpi_core (System Clock)
- LVDS pads ── SERDES deser+comma-align ─[RX CDC FIFO]─► rx_sym ─► frame_rx ─ 8b10b dec ─ incr.CRC ─┐
-   (tx_clk    (rx_bit_clk)                                                                          │
-    rx_clk)                                                                       link_fsm ──► CSR  │
- LVDS pads ◄─ SERDES serializer ◄────────[TX CDC FIFO]◄─ tx_sym ◄─ frame_tx ◄ 8b10b enc ◄ incr.CRC ◄┘
-              (tx_bit_clk)                                            ▲   GPIO / UART / I2C / Data
-   IOPLL: 25 MHz base ── speed_change ──► 400 MHz DDR (op rate)       └─ TX payload mux / RX routing
-```
-
-| File (`rtl/`) | Role |
-|---|---|
-| `ltpi_pkg.sv` | comma codes, frame offsets, state/speed/event/cmd enums, capability map, CSR offsets, spec thresholds |
-| `ltpi_crc8.sv` | CRC-8 (0x07, init 0); the single-byte step used incrementally per symbol |
-| `ltpi_8b10b.sv` | IBM 8b/10b encoder + decoder (data + K28.5/6/7 commas, running disparity) |
-| `ltpi_frame_tx.sv` / `ltpi_frame_rx.sv` | **symbol-parallel** (1 symbol/clock) 16-symbol frame assemble/encode and decode/CRC-check; **incremental CRC**, **pipelined decode** |
-| `ltpi_link_fsm.sv` | training/configuration/operational FSM + **base→operational speed switch** (`ROLE`-parameterized) |
-| `ltpi_gpio_chan.sv` `ltpi_uart_chan.sv` `ltpi_i2c_relay.sv` `ltpi_data_chan.sv` | the four channels |
-| `ltpi_csr.sv` | Table 36 register file with a BMC access port |
-| `ltpi_core.sv` | System-Clock endpoint core: frame tx/rx + FSM + channels + CSR; symbol interface to the PHY |
-| `ltpi_ser.sv` / `ltpi_deser.sv` | bit serializer / deserializer + comma bit-align (behavioral SERDES model inside the PHY) |
-| `ltpi_cdc_fifo.sv` | dual-clock async FIFO (Gray-pointer) bridging core ↔ SERDES domains |
-| `ltpi_phy.sv` | dual-rate serial PHY: J=10 SERDES + TX/RX CDC FIFOs (vendor LVDS SERDES + IOPLL on silicon) |
-| `ltpi_scm_top.sv` / `ltpi_hpm_top.sv` | ROLE wrappers: `ltpi_core` + `ltpi_phy` + serial clocks |
-
----
-
-## Build & run
-
-```bash
-# Simulation (Icarus): live SCM<->HPM link, all channels
-sim/run.sh                       # -> "PASS 11/11"
-
-# Formal (OSS CAD Suite: yosys + SymbiYosys + boolector)
-source tools/env.sh
-formal/run_all.sh                # -> "FORMAL: ALL GREEN"
-
-# Synthesis + fit + STA on Quartus Prime Pro (Cyclone 10 GX)
-syn/altera/build.sh core         # symbol-parallel core, timing @ parallel clock (recommended)
-syn/altera/build.sh both         # both endpoint tops (incl. behavioral PHY)
-syn/altera/build.sh scm syn      # one top, synthesis-only (fast check)
+```powershell
+cd sim
+iverilog -g2012 -I ../rtl -o tb.vvp ../rtl/*.sv tb_ltpi_system.sv
+vvp tb.vvp        # writes tb_ltpi_system.vcd
+python render_waveform.py   # renders ltpi_loopback_waveform.png
 ```
 
-See [`syn/altera/README.md`](syn/altera/README.md) for the Quartus flow and
-[`reports/`](reports/) for captured sim/formal/Quartus logs.
+## UVM testbench (`uvm/`)
 
----
+Reactive-peer architecture: the DUT is a full SCM endpoint; the UVM agent
+emulates the HPM at bit level (driver serializes CRC-correct — or
+deliberately corrupted — frames; monitors reassemble both directions).
+Scoreboard checks DUT frames are always CRC-clean and protocol-ordered;
+functional coverage bins frame types, link states, and negotiated speeds.
+Tests: `ltpi_bringup_test` (clean bring-up + GPIO traffic, expects 400 MHz
+DDR) and `ltpi_crc_error_test` (link must survive 10% frame corruption).
+Requires a UVM-1.2 simulator (Questa/VCS/Xcelium — run scripts included);
+UVM does not run under Icarus/mainline Verilator, so these sources are
+compile-targeted at those tools rather than validated here.
 
-## Design decisions / scope notes
+## FPGA integration
 
-- **Dual-rate, J=10 SERDES, symbol-parallel core (spec Fig 19).** Training runs at the
-  25 MHz base; at the Link Speed → Advertise transition the FSM pulses `speed_change`
-  and the IOPLL reconfigures to the negotiated operational rate (up to **400 MHz DDR =
-  800 Mbps**). The bit (de)serialization is a J=10 SERDES, so the fabric core never runs
-  above `line_rate / 10` (80 MHz at 400 MHz DDR) — proven to close timing at 100 MHz.
-  The RX is source-synchronous: each end's RX bit clock is the far end's forwarded
-  `tx_clk`, so the receiver always tracks the transmitter's rate; a `realign` pulse
-  re-acquires comma/word alignment after the PLL relock (the ≥1 ms Advertise dwell,
-  `ADVERTISE_CYCLES`, covers relock — shrunk for sim/formal).
-- **Why not 800 MHz DDR on Cyclone 10 GX:** the device's true-LVDS SERDES tops out at
-  ~1.434 Gbps (I/O-PLL VCO limit), so 800 MHz DDR (1.6 Gbps) would need the GX
-  transceiver or Arria 10. The committed target is **400 MHz DDR (800 Mbps)**, well
-  within the LVDS SERDES window; the RTL is rate-parameterized, so a faster device/PHY
-  only changes the IOPLL settings and `SPEED_CAP`.
-- **PHY model.** `ltpi_phy` uses a synthesizable behavioral SERDES (`ltpi_ser`/`ltpi_deser`)
-  for vendor-neutral sim/formal; on silicon the LVDS SERDES Intel FPGA IP (J=10,
-  External-PLL) + IOPLL replace it under `ifdef LTPI_ALTERA_SERDES` — the symbol/CDC
-  boundary is unchanged. The `core` synthesis target proves the timing-critical fabric;
-  the bit-serial SERDES is the vendor hard block (an 800 MHz bit clock exceeds the
-  ~644 MHz fabric limit, so it cannot be soft logic).
-- The I2C relay and Data channel use the abstract local-bus / Avalon-MM interfaces the
-  spec leaves to the implementation (the full I2C bus micro-architecture is explicitly
-  out of LTPI scope, §2.2.1.3).
+* Instantiate `ltpi_top` + `vendor/ltpi_lvds_io.sv` with
+  `+define+LTPI_VENDOR_ALTERA` or `+define+LTPI_VENDOR_LATTICE`.
+* Constraints: `vendor/constraints_altera.sdc` (Quartus) /
+  `vendor/constraints_lattice.lpf` (Diamond); pick the 200/400 MHz block.
+* `ddr_mode` + PLL reconfiguration on speed switch are system-level: after
+  training, read `speed_select` (bit15 = DDR, bit8 = 400 MHz, bit5 =
+  200 MHz), reprogram the PLL, and let the Advertise-phase re-alignment
+  (1 ms window, spec Note 4) absorb the lock time.
+* 800 Mbps DDR needs Cyclone 10 GX-class LVDS or ECP5-5G/Avant with DELAYG
+  tuning; 200/400 SDR close on mainstream devices of both vendors.
+
+## Coverage
+
+**Code coverage** (Verilator `--coverage`, system TB `sim/tb_ltpi_system.sv`,
+11 self-checking test groups): **89.4% line coverage** overall —
+`ltpi_frame_tx`, `ltpi_gpio_channel`, `ltpi_uart_channel`, `crc8` at 100%;
+`ltpi_link_fsm` 90.8%; `ltpi_i2c_relay` 84.0%. Residual gaps are
+DDR/bitslip PHY paths, invalid-frame arms and adopt-select (all covered by
+formal proofs instead), plus unread CSR addresses. Rebuild:
+`sim/` → `verilator --binary --timing --coverage -CFLAGS
+-fno-declone-ctor-dtor ...`, report via `verilator_coverage` +
+`sim/cov_summary.py`.
+
+**Formal property inventory**: 127 assertions, 30 assumptions, 39 cover
+points across 12 proof suites; every cover point is reached (a cover task
+fails otherwise), so 100% cover-point reachability.
+
+**Mutation coverage** (`formal/mutation_coverage.py`, mcy methodology:
+inject single-operator bugs outside the FORMAL blocks, expect the
+verification suite to notice): 62 mutants across 6 modules.
+
+| Kill stage | killed | cumulative |
+|---|---|---|
+| Module formal properties (BMC) | 21 | 33.9% |
+| + Composition proofs (loopback suites) | +9 | 48.4% |
+| + Self-checking system simulation | +9 | **62.9%** |
+
+Survivor analysis (23, listed in `formal/mutation_report.txt`): about half
+are *equivalent or benign* mutants — loop-bound `<`→`<=` writing an
+ignored out-of-range bit, the TX frame counter `+`→`-` (the receiver
+decodes each frame's counter value, so ordering is immaterial), and
+`>=`→`>` off-by-ones on "at least N" spec thresholds. The remainder are
+genuine detection gaps concentrated where module assertions share decode
+cones with the RTL (a mutation shifts both, so the property is
+tautological) and in paths the sim doesn't drive (I2C read-direction
+decode, arbitration race, fast UART edges). The composition proofs kill
+where module properties can't precisely because they judge each side
+against an independent reference — the right place to grow the property
+set further.
+
+## Vendor parity matrix
+
+Compared against the three public LTPI implementations' user guides
+(OCP/Intel `LTPI_User_Guide.pdf` rev 1.1; Lattice DC-SCM LTPI IP
+FPGA-IPUG-02200 / Radiant IP 1.5.x docs; Microchip CoreLTPI UG):
+
+| Feature | OCP/Intel ref | Lattice IP | Microchip CoreLTPI | **This core** |
+|---|---|---|---|---|
+| LL GPIO (16) | ✓ | ✓ | ✓ | ✓ proven |
+| NL GPIO | ≤1024 | ✓ | ✓ | ✓ parameterized, proven |
+| UART channels | 2 | ≤24 | – | 1 lane instantiated (Table 8 field for 2; add a 2nd instance on byte 7 hi-nibble) |
+| I2C/SMBus channels | 6 | ✓ (+MCTP) | – | 1 instantiated (frame fields for 6); **bidirectional + clock stretch proven** — exceeds all three (needed for MCTP/SPDM) |
+| Data channel | AVMM + mailbox | APB | – | ✓ AVMM/APB-style, tag-tracked, proven (D1–D5) + end-to-end sim |
+| CSR block | ✓ (AVMM, peakRDL) | ✓ | ✓ | ✓ Table 36 subset proven (status/state/speed, RWC errors, counters, link control) |
+| Link training | ✓ | ✓ | GPIO-profile | ✓ proven both roles + composition |
+| Speeds | 25–1000MHz | ✓ | input-clock based | 25M/200M/400M SDR + 400M DDR wired; caps word extensible to all Table 21 rates |
+| Debug | debug ports | debug ports | – | CSR debug regs + status outputs + VCD flows |
+| Formal proofs | – | – | – | **12 suites, unbounded induction** (unique to this core) |
+
+Known deltas: OEM channels/frames and the 6-channel I2C / 24-UART scale
+are structural replication of the proven single-channel modules (frame
+bytes 8-10 and 7-hi are reserved for them in the payload mux); the
+spec's full CSR register file beyond the Table 36 subset (platform IDs,
+advertise capability mirrors) follows the same proven RWC/RO patterns.
+
+## Known deviations / notes
+
+* Table 43 (31 Configure frames max) is followed where §4.1.2.2 text says 32.
+* Frame-alignment loss inside policing states retrains immediately
+  (conservative vs. counting into the 3/7 lost-frame budgets).
+* UART sample positions use 0/5/10 of the byte counter (spec Fig. 15 is an
+  example distribution, not normative).
+* 8b/10b symbol coding is delegated to the SERDES/PHY layer; the byte-domain
+  logic here treats commas as reserved byte values, matching the frame-level
+  behavior of the spec's reference flow.

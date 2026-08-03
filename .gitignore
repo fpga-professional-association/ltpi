@@ -1,17 +1,26 @@
-# simulation
+# SymbiYosys work directories (regenerate with sby -f <suite>.sby)
+formal/*/
+!formal/*.sby
+!formal/*.sv
+!formal/*.py
+!formal/mutation_report.txt
+
+# Simulation build/output artifacts
 sim/*.vvp
 sim/*.vcd
-sim/iverilog.log
-# formal working directories (regenerate with formal/run_all.sh)
-formal/ltpi_*/
-formal/*/engine_*/
-# Quartus staging is on the Windows side (/mnt/c/ltpi_quartus); nothing local
-output_files/
-*.qws
-*.rpt
-*.jdi
-*.pin
-*.sof
+sim/obj_dir/
+sim/obj_dir_stale/
+sim/coverage.dat
+sim/coverage.info
+sim/coverage_annotated/
+sim/run.log
+sim/mut.vvp
 
-# Windows download artifacts
-*:Zone.Identifier
+# Editor / OS noise
+*.swp
+.DS_Store
+
+# Any stray waveform/build outputs anywhere
+*.vcd
+*.vvp
+!sim/ltpi_loopback_waveform.png
