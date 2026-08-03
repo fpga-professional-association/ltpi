@@ -139,6 +139,18 @@ module ltpi_link_fsm #(
     logic detect_done, speed_done, speed_timeout, adv_align_done,
           adv_align_timeout, adv_done, cfg_done, cfg_timeout;
 
+    // Declared ahead of the exit-condition assigns that reference them
+    // (drivers live below; strict elaborators require declaration-before-
+    // use). changed_q is the registered reg-to-reg change detect that
+    // keeps the frame-decode cone off the counter clears (Agilex closure);
+    // exits are gated on it because counters clear one cycle into a state.
+    ltpi_pkg::link_state_t state_prev_q;
+    logic changed_q;
+    assign changed_q = (state != state_prev_q);
+    logic adv_clear_q;   // advertise-timer clear (registered, driven below)
+    logic adv_sat_q;     // advertise-timer saturation flag
+    logic nstate_in_adv;
+
     // Link Detect exit: (>=255 TX and >=7 consecutive good RX) OR any Link
     // Speed frame received (other side is already ahead).
     // All counter-threshold exits are gated by !changed_q / !adv_clear_q:
@@ -216,19 +228,10 @@ module ltpi_link_fsm #(
     logic state_change;
     assign state_change = (nstate != state);
 
-    // Registered change detect for counter clears: reg-to-reg 3-bit
-    // compare instead of the full nstate decode cone (the frame_type ->
-    // rx decode -> nstate -> counter-clear path was the Agilex 3 critical
-    // path at 400 MHz). Clears land on the first cycle of the new state;
-    // the one-event window shift is absorbed by the ">= threshold" exit
-    // semantics (spec says "at least N").
-    ltpi_pkg::link_state_t state_prev_q;
-    logic changed_q;
     always_ff @(posedge clk) begin
         if (rst) state_prev_q <= ST_DETECT_ALIGN;
         else     state_prev_q <= state;
     end
-    assign changed_q = (state != state_prev_q);
 
     // ------------------------------------------------------------------
     // State & counters
@@ -299,9 +302,6 @@ module ltpi_link_fsm #(
     // 1-level enable - the state-decode fanout was the critical path at
     // 400 MHz on Agilex. Semantics shift by one cycle on entry, which is
     // noise against the ms-scale budgets.
-    logic adv_clear_q;   // clear the timer this cycle
-    logic adv_sat_q;     // timer reached ATW_MAX - stop incrementing
-    logic nstate_in_adv;
     assign nstate_in_adv = (nstate == ST_ADV_ALIGN) || (nstate == ST_ADV);
 
     always_ff @(posedge clk) begin
@@ -432,9 +432,9 @@ module ltpi_link_fsm #(
             ST_DETECT_ALIGN, ST_DETECT: tx_frame_type = FRAME_LINK_DETECT;
             // Entry-cycle guard: never emit a Link Speed frame before the
             // (one-cycle-retimed) selection latch has fired.
-            ST_SPEED:                   tx_frame_type = speed_valid
-                                                        ? FRAME_LINK_SPEED
-                                                        : FRAME_LINK_DETECT;
+            ST_SPEED:
+                if (speed_valid) tx_frame_type = FRAME_LINK_SPEED;
+                else             tx_frame_type = FRAME_LINK_DETECT;
             ST_ADV_ALIGN, ST_ADV:       tx_frame_type = FRAME_ADVERTISE;
             ST_CFG_ACC:                 tx_frame_type = ROLE_SCM ? FRAME_CONFIGURE
                                                                  : FRAME_ACCEPT;
