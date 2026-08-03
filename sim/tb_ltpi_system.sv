@@ -28,8 +28,8 @@ module tb_ltpi_system;
     logic [15:0] scm_ll_in = '0,  scm_ll_out;
     logic [31:0] scm_nl_in = '0,  scm_nl_out;
     logic        scm_uart_txd = 1'b1, scm_uart_txd_out;
-    logic        scm_i2c_start = 0, scm_i2c_stop = 0;
-    logic        scm_i2c_scl_rise = 0, scm_i2c_scl_fall = 0, scm_i2c_sda = 1;
+    logic        scm_scl = 1, scm_sda = 1;   // raw SCM-side bus lines
+    logic        hpm_scl = 1, hpm_sda = 1;   // raw HPM-side bus lines
     logic        scm_scl_stretch, scm_sda_pull;
     logic [1:0]  scm_stretch_v, scm_pull_v, scm_sgen_v, scm_pgen_v;
     logic [1:0]  hpm_stretch_v, hpm_pull_v, hpm_sgen_v, hpm_pgen_v;
@@ -38,10 +38,7 @@ module tb_ltpi_system;
     logic [15:0] hpm_ll_in = '0,  hpm_ll_out;
     logic [31:0] hpm_nl_in = '0,  hpm_nl_out;
     logic        hpm_uart_txd = 1'b1, hpm_uart_txd_out;
-    logic        hpm_i2c_scl_fall = 0;
-    logic        hpm_i2c_start = 0;
-    logic        hpm_i2c_stop = 0;
-    logic        hpm_i2c_scl_rise = 0, hpm_i2c_sda = 1;
+
     logic        scm_soft = 0, hpm_soft = 0, scm_retrain = 0;
     logic [7:0]  csr_addr = 0;
     logic        csr_we = 0, csr_re = 0;
@@ -56,10 +53,20 @@ module tb_ltpi_system;
     logic [31:0] hpm_cmp_addr, hpm_cmp_wdata;
     logic [31:0] hpm_cmp_rdata = 0;
     logic [31:0] tb_mem [0:15];
+    // OEM APB: SCM-side master (tb-driven) -> HPM-side APB slave memory
+    logic        apb_psel = 0, apb_penable = 0, apb_pwrite = 0;
+    logic [31:0] apb_paddr = 0, apb_pwdata = 0;
+    logic        apb_pready, apb_pslverr;
+    logic [31:0] apb_prdata;
+    logic        hpm_apb_psel, hpm_apb_penable, hpm_apb_pwrite;
+    logic [31:0] hpm_apb_paddr, hpm_apb_pwdata;
+    logic        hpm_apb_pready = 0;
+    logic [31:0] hpm_apb_prdata = 0;
+    logic [31:0] apb_mem [0:15];
     logic        hpm_scl_stretch, hpm_sda_pull;
     logic        hpm_start_gen, hpm_stop_gen;
     logic        scm_start_gen, scm_stop_gen;
-    logic        scm_i2c_scl_fall2 = 0;
+
 
     ltpi_pkg::link_state_t scm_state, hpm_state;
     logic scm_up, hpm_up;
@@ -70,7 +77,7 @@ module tb_ltpi_system;
     localparam CAPS = CAPS_DEFAULT;   // 25M + 200M SDR + 400M SDR + DDR
 
     ltpi_top #(
-        .ROLE_SCM(1'b1), .NL_TOTAL(32),
+        .ROLE_SCM(1'b1), .NL_TOTAL(32), .CLK_HZ(200_000_000),
         .DETECT_MIN_TX(8), .DETECT_MIN_RX(4), .ALIGN_MIN_RX(3),
         .SPEED_SCM_MIN_TX(3), .SPEED_HPM_MIN_RX(2), .SPEED_TIMEOUT_TX(64),
         .ADV_MIN_CYCLES(1500), .ADV_ALIGN_TIMEOUT(3000), .ADV_MIN_RX(3), .CFG_MAX_TX(16), .ACC_MAX_TX(8)
@@ -84,11 +91,8 @@ module tb_ltpi_system;
         .nl_gpio_in(scm_nl_in), .nl_gpio_out(scm_nl_out),
         .uart_txd_in(scm_uart_txd), .uart_flow_in(1'b1),
         .uart_txd_out(scm_uart_txd_out), .uart_flow_out(),
-        .i2c_start_det({1'b0, scm_i2c_start}),
-        .i2c_stop_det({1'b0, scm_i2c_stop}),
-        .i2c_scl_rise({1'b0, scm_i2c_scl_rise}),
-        .i2c_scl_fall({1'b0, scm_i2c_scl_fall | scm_i2c_scl_fall2}),
-        .i2c_sda_val({1'b1, scm_i2c_sda}),
+        .i2c_scl_in({1'b1, scm_scl}),
+        .i2c_sda_in({1'b1, scm_sda}),
         .i2c_scl_stretch(scm_stretch_v), .i2c_sda_pull(scm_pull_v),
         .i2c_bus_start_gen(scm_sgen_v), .i2c_bus_stop_gen(scm_pgen_v),
         .dc_req_valid(dc_req_v), .dc_req_write(dc_req_w),
@@ -98,6 +102,14 @@ module tb_ltpi_system;
         .dc_rsp_error(dc_rsp_error),
         .dc_cmp_req(), .dc_cmp_write(), .dc_cmp_addr(), .dc_cmp_wdata(),
         .dc_cmp_byteen(), .dc_cmp_rdata(32'h0), .dc_cmp_done(1'b0),
+        .apb_s_psel(apb_psel), .apb_s_penable(apb_penable),
+        .apb_s_pwrite(apb_pwrite), .apb_s_paddr(apb_paddr),
+        .apb_s_pwdata(apb_pwdata), .apb_s_pstrb(4'hF),
+        .apb_s_pready(apb_pready), .apb_s_prdata(apb_prdata),
+        .apb_s_pslverr(apb_pslverr),
+        .apb_m_psel(), .apb_m_penable(), .apb_m_pwrite(), .apb_m_paddr(),
+        .apb_m_pwdata(), .apb_m_pstrb(),
+        .apb_m_pready(1'b1), .apb_m_prdata(32'h0), .apb_m_pslverr(1'b0),
         .csr_addr(csr_addr), .csr_we(csr_we), .csr_re(csr_re),
         .csr_wdata(csr_wdata), .csr_rdata(scm_csr_rdata),
         .link_state(scm_state), .link_up(scm_up),
@@ -106,7 +118,7 @@ module tb_ltpi_system;
     );
 
     ltpi_top #(
-        .ROLE_SCM(1'b0), .NL_TOTAL(32),
+        .ROLE_SCM(1'b0), .NL_TOTAL(32), .CLK_HZ(200_000_000),
         .DETECT_MIN_TX(8), .DETECT_MIN_RX(4), .ALIGN_MIN_RX(3),
         .SPEED_SCM_MIN_TX(3), .SPEED_HPM_MIN_RX(2), .SPEED_TIMEOUT_TX(64),
         .ADV_MIN_CYCLES(1500), .ADV_ALIGN_TIMEOUT(3000), .ADV_MIN_RX(3), .CFG_MAX_TX(16), .ACC_MAX_TX(8)
@@ -120,11 +132,8 @@ module tb_ltpi_system;
         .nl_gpio_in(hpm_nl_in), .nl_gpio_out(hpm_nl_out),
         .uart_txd_in(hpm_uart_txd), .uart_flow_in(1'b1),
         .uart_txd_out(hpm_uart_txd_out), .uart_flow_out(),
-        .i2c_start_det({1'b0, hpm_i2c_start}),
-        .i2c_stop_det({1'b0, hpm_i2c_stop}),
-        .i2c_scl_rise({1'b0, hpm_i2c_scl_rise}),
-        .i2c_scl_fall({1'b0, hpm_i2c_scl_fall}),
-        .i2c_sda_val({1'b1, hpm_i2c_sda}),
+        .i2c_scl_in({1'b1, hpm_scl}),
+        .i2c_sda_in({1'b1, hpm_sda}),
         .i2c_scl_stretch(hpm_stretch_v), .i2c_sda_pull(hpm_pull_v),
         .i2c_bus_start_gen(hpm_sgen_v), .i2c_bus_stop_gen(hpm_pgen_v),
         .dc_req_valid(1'b0), .dc_req_write(1'b0),
@@ -135,6 +144,14 @@ module tb_ltpi_system;
         .dc_cmp_addr(hpm_cmp_addr), .dc_cmp_wdata(hpm_cmp_wdata),
         .dc_cmp_byteen(), .dc_cmp_rdata(hpm_cmp_rdata),
         .dc_cmp_done(hpm_cmp_done),
+        .apb_s_psel(1'b0), .apb_s_penable(1'b0), .apb_s_pwrite(1'b0),
+        .apb_s_paddr(32'h0), .apb_s_pwdata(32'h0), .apb_s_pstrb(4'h0),
+        .apb_s_pready(), .apb_s_prdata(), .apb_s_pslverr(),
+        .apb_m_psel(hpm_apb_psel), .apb_m_penable(hpm_apb_penable),
+        .apb_m_pwrite(hpm_apb_pwrite), .apb_m_paddr(hpm_apb_paddr),
+        .apb_m_pwdata(hpm_apb_pwdata), .apb_m_pstrb(),
+        .apb_m_pready(hpm_apb_pready), .apb_m_prdata(hpm_apb_prdata),
+        .apb_m_pslverr(1'b0),
         .csr_addr(csr_addr), .csr_we(1'b0), .csr_re(csr_re),
         .csr_wdata(csr_wdata), .csr_rdata(hpm_csr_rdata),
         .link_state(hpm_state), .link_up(hpm_up),
@@ -151,6 +168,18 @@ module tb_ltpi_system;
     assign hpm_start_gen   = hpm_sgen_v[0];
     assign hpm_stop_gen    = hpm_pgen_v[0];
 
+    // HPM-side APB slave: 16-word memory, 1-wait-state PREADY.
+    always @(posedge clk) begin
+        hpm_apb_pready <= 1'b0;
+        if (hpm_apb_psel && hpm_apb_penable && !hpm_apb_pready) begin
+            if (hpm_apb_pwrite)
+                apb_mem[hpm_apb_paddr[5:2]] <= hpm_apb_pwdata;
+            else
+                hpm_apb_prdata <= apb_mem[hpm_apb_paddr[5:2]];
+            hpm_apb_pready <= 1'b1;
+        end
+    end
+
     // HPM-side completer: a 16-word scratch memory with 1-cycle service.
     always @(posedge clk) begin
         hpm_cmp_done <= 1'b0;
@@ -162,6 +191,9 @@ module tb_ltpi_system;
             hpm_cmp_done <= 1'b1;
         end
     end
+
+    // Filter settle: FILT_CYC (10 @ 200MHz, 50ns) + 2FF sync + margin.
+    localparam int SETTLE = 25;
 
     // ------------------------------------------------------------------
     int errors = 0;
@@ -212,62 +244,73 @@ module tb_ltpi_system;
             begin errors++; $display("FAIL: UART high not tunneled"); end
         else $display("PASS: UART high level tunneled");
 
-        // ---- 5. I2C Start event relay with clock stretching --------
-        @(posedge clk); scm_i2c_start <= 1; @(posedge clk); scm_i2c_start <= 0;
-        @(posedge clk); scm_i2c_scl_fall <= 1; @(posedge clk);
-        scm_i2c_scl_fall <= 0;
-        // Controller relay must now stretch SCL until Start Received.
-        repeat (5) @(posedge clk);
+        // ---- 5. I2C Start relay, RAW bus lines through the 50ns filter --
+        // SETTLE > FILT_CYC(10 @200MHz) + 2FF sync + margin.
+        // START: SDA falls while SCL high, then SCL falls.
+        scm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        scm_scl <= 0; repeat (SETTLE) @(posedge clk);
         if (!scm_scl_stretch)
             begin errors++; $display("FAIL: SCM not stretching after Start"); end
         else $display("PASS: SCM stretches SCL awaiting Start Received");
 
         wait (hpm_start_gen);
         $display("[%0t] HPM regenerating START", $time);
-        // Complete the regenerated START on the HPM local bus.
-        @(posedge clk); hpm_i2c_scl_fall <= 1; @(posedge clk);
-        hpm_i2c_scl_fall <= 0;
+        // Complete the regenerated START on the HPM local bus (SCL fall;
+        // the relay itself is pulling SDA low - mirror it on the raw line).
+        hpm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        hpm_scl <= 0; repeat (SETTLE) @(posedge clk);
 
         // Start Received travels back; SCM must release the stretch.
         wait (!scm_scl_stretch);
         $display("[%0t] PASS: I2C Start handshake complete, stretch released",
                  $time);
 
+        // ---- 5b. FILTER: a 25ns SCL spike on the SCM bus must vanish ---
+        begin : spike_check
+            integer pre_state;
+            pre_state = u_scm.g_i2c[0].u_i2c.state;
+            scm_scl <= 1;                    // 25ns = 5 cycles < FILT_CYC
+            repeat (5) @(posedge clk);
+            scm_scl <= 0;
+            repeat (SETTLE) @(posedge clk);
+            if (u_scm.g_i2c[0].u_i2c.state !== pre_state
+                || u_scm.u_fsm.state !== 6)
+                begin errors++; $display("FAIL: 25ns spike leaked"); end
+            else $display("PASS: 25ns SCL spike suppressed by tSP filter");
+        end
+
         // ---- 6. BIDIRECTIONAL: HPM-initiated transaction (SPDM path) ----
-        // Finish the SCM transaction first (Stop), returning both relays
-        // to idle.
-        @(posedge clk); scm_i2c_stop <= 1; @(posedge clk); scm_i2c_stop <= 0;
+        // STOP on SCM: SCL rises, then SDA rises.
+        scm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        scm_sda <= 1; repeat (SETTLE) @(posedge clk);
         wait (hpm_stop_gen);
         // HPM local bus completes the regenerated STOP.
-        @(posedge clk); hpm_i2c_stop <= 1; @(posedge clk); hpm_i2c_stop <= 0;
+        hpm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        hpm_sda <= 1; repeat (SETTLE) @(posedge clk);
         wait (u_scm.g_i2c[0].u_i2c.state == 0 && u_hpm.g_i2c[0].u_i2c.state == 0);
         $display("[%0t] both relays idle after Stop", $time);
 
         // Now the HPM (SPDM responder acting as bus master) initiates.
-        @(posedge clk); hpm_i2c_start <= 1; @(posedge clk); hpm_i2c_start <= 0;
-        @(posedge clk); hpm_i2c_scl_fall <= 1; @(posedge clk);
-        hpm_i2c_scl_fall <= 0;
-        repeat (5) @(posedge clk);
+        hpm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        hpm_scl <= 0; repeat (SETTLE) @(posedge clk);
         if (!hpm_scl_stretch)
             begin errors++; $display("FAIL: HPM not stretching after its Start"); end
         else $display("PASS: HPM initiator stretches awaiting Start Received");
 
         wait (scm_start_gen);
         $display("[%0t] PASS: SCM regenerating HPM-initiated START", $time);
-        @(posedge clk); scm_i2c_scl_fall2 <= 1; @(posedge clk);
-        scm_i2c_scl_fall2 <= 0;
+        scm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        scm_scl <= 0; repeat (SETTLE) @(posedge clk);
         wait (!hpm_scl_stretch);
         $display("[%0t] PASS: bidirectional I2C - HPM-initiated handshake complete",
                  $time);
 
         // ---- 7. I2C data bit through the full handshake (HPM sources) --
-        // Address bit 0 of the HPM-initiated transaction: sample at rise,
-        // ship at fall, wait for SCM to regenerate and confirm.
-        @(posedge clk); hpm_i2c_sda <= 1; hpm_i2c_scl_rise <= 1;
-        @(posedge clk); hpm_i2c_scl_rise <= 0;
-        @(posedge clk); hpm_i2c_scl_fall <= 1; @(posedge clk);
-        hpm_i2c_scl_fall <= 0;
-        repeat (5) @(posedge clk);
+        // Data bit 1: SDA changes while SCL low, sampled at rise, shipped
+        // at fall.
+        hpm_sda <= 1; repeat (SETTLE) @(posedge clk);
+        hpm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        hpm_scl <= 0; repeat (SETTLE) @(posedge clk);
         if (!hpm_scl_stretch)
             begin errors++; $display("FAIL: no stretch during data bit"); end
         else $display("PASS: HPM stretches while data bit crosses the link");
@@ -276,15 +319,21 @@ module tb_ltpi_system;
         if (scm_sda_pull)
             begin errors++; $display("FAIL: SDA pulled for a 1-bit"); end
         else $display("PASS: open-drain - regenerated 1-bit not pulled");
-        @(posedge clk); scm_i2c_scl_fall2 <= 1; @(posedge clk);
-        scm_i2c_scl_fall2 <= 0;
+        // Clock the regenerated bit on the SCM bus.
+        scm_sda <= 1; repeat (SETTLE) @(posedge clk);
+        scm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        scm_scl <= 0; repeat (SETTLE) @(posedge clk);
         wait (!hpm_scl_stretch);
         $display("[%0t] PASS: data bit handshake complete (Data/Echo/Rcvd/Echo)",
                  $time);
-        // Close the transaction: HPM issues STOP, SCM regenerates it.
-        @(posedge clk); hpm_i2c_stop <= 1; @(posedge clk); hpm_i2c_stop <= 0;
+        // Close: HPM STOP (SDA low prep while SCL low, SCL rise, SDA rise).
+        hpm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        hpm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        hpm_sda <= 1; repeat (SETTLE) @(posedge clk);
         wait (u_scm.g_i2c[0].u_i2c.bus_stop_gen);
-        @(posedge clk); scm_i2c_stop <= 1; @(posedge clk); scm_i2c_stop <= 0;
+        scm_sda <= 0; repeat (SETTLE) @(posedge clk);
+        scm_scl <= 1; repeat (SETTLE) @(posedge clk);
+        scm_sda <= 1; repeat (SETTLE) @(posedge clk);
         wait (u_scm.g_i2c[0].u_i2c.state == 0 && u_hpm.g_i2c[0].u_i2c.state == 0);
         $display("[%0t] PASS: HPM transaction closed, both relays idle", $time);
 
@@ -366,6 +415,26 @@ module tb_ltpi_system;
                 u_scm.pf_gpio, u_scm.pf_i2c, u_scm.pf_uart, u_scm.pf_data,
                 u_scm.pf_i2c_en, u_scm.pf_nl_cnt);
 
+        // ---- 13. OEM APB tunnel: write + read through the link ------
+        @(posedge clk);
+        apb_pwrite <= 1; apb_paddr <= 32'h0000_0020;
+        apb_pwdata <= 32'hCAFE_D00D; apb_psel <= 1;
+        @(posedge clk); apb_penable <= 1;
+        wait (apb_pready); @(posedge clk);
+        apb_psel <= 0; apb_penable <= 0;
+        if (apb_pslverr)
+            begin errors++; $display("FAIL: APB write errored"); end
+        else $display("[%0t] PASS: OEM APB write completed over LTPI", $time);
+        repeat (4) @(posedge clk);
+        apb_pwrite <= 0; apb_paddr <= 32'h0000_0020; apb_psel <= 1;
+        @(posedge clk); apb_penable <= 1;
+        wait (apb_pready); @(posedge clk);
+        apb_psel <= 0; apb_penable <= 0;
+        if (apb_prdata !== 32'hCAFE_D00D)
+            begin errors++; $display("FAIL: APB read = %h", apb_prdata); end
+        else $display("[%0t] PASS: OEM APB read back = %h over LTPI",
+                      $time, apb_prdata);
+
         repeat (500) @(posedge clk);
 
         if (errors == 0)
@@ -403,6 +472,21 @@ module tb_ltpi_system;
                          u_hpm.rx_payload[51:48], hpm_nl_out);
         end
     end
+    always @(u_scm.u_oem_apb.rq_beat or u_scm.u_oem_apb.rq_pend or u_scm.u_oem_apb.rq_sent)
+        $display("[%0t] SCMapb pend=%b sent=%b beat=%0d", $time,
+                 u_scm.u_oem_apb.rq_pend, u_scm.u_oem_apb.rq_sent,
+                 u_scm.u_oem_apb.rq_beat);
+    always @(u_hpm.u_oem_apb.cq_beat or u_hpm.u_oem_apb.c_busy or u_hpm.u_oem_apb.c_rsp_pend)
+        $display("[%0t] HPMapb cq=%0d busy=%b rsp=%b", $time,
+                 u_hpm.u_oem_apb.cq_beat, u_hpm.u_oem_apb.c_busy,
+                 u_hpm.u_oem_apb.c_rsp_pend);
+    integer dbg_apb = 0;
+    always @(posedge clk)
+        if (u_hpm.op_frame_good && $time > 141000 && dbg_apb < 12) begin
+            dbg_apb = dbg_apb + 1;
+            $display("[%0t] HPMoem byte11=%h rx103_72=%h", $time,
+                     u_hpm.rx_payload[79:72], u_hpm.rx_payload[103:72]);
+        end
     always @(posedge scm_aligned) $display("[%0t] SCM PHY aligned", $time);
     always @(posedge hpm_aligned) $display("[%0t] HPM PHY aligned", $time);
     always @(u_scm.g_i2c[0].u_i2c.state)

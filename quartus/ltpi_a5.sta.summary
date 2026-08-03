@@ -3,18 +3,18 @@ Timing Analyzer Summary
 ------------------------------------------------------------
 
 Type  : Setup 'ltpi_clk'
-Slack : 0.604
+Slack : 0.475
 TNS   : 0.000
 Corner: Slow vid1 100C Model
 
 Type  : Hold 'ltpi_clk'
-Slack : 0.071
+Slack : 0.070
 TNS   : 0.000
 Corner: Fast vid1 0C Model
 
 Type  : Minimum Pulse Width 'ltpi_clk'
-Slack : 0.888
+Slack : 0.887
 TNS   : 0.000
-Corner: Slow vid1b 100C Model
+Corner: Slow vid1 100C Model
 
 ------------------------------------------------------------

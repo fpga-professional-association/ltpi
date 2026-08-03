@@ -19,7 +19,7 @@ module tb_uvm_top;
     end
 
     ltpi_top #(
-        .ROLE_SCM(1'b1), .NL_TOTAL(32),
+        .ROLE_SCM(1'b1), .NL_TOTAL(32), .CLK_HZ(200_000_000),
         // Shrunk thresholds keep UVM sims fast; override per-test with
         // defparam or a config class if the spec values are wanted.
         .DETECT_MIN_TX(8), .DETECT_MIN_RX(4), .ALIGN_MIN_RX(3),
@@ -35,8 +35,7 @@ module tb_uvm_top;
         .nl_gpio_in(vif.nl_gpio_in), .nl_gpio_out(vif.nl_gpio_out),
         .uart_txd_in(vif.uart_txd_in), .uart_flow_in(1'b1),
         .uart_txd_out(vif.uart_txd_out), .uart_flow_out(),
-        .i2c_start_det(2'b00), .i2c_stop_det(2'b00),
-        .i2c_scl_rise(2'b00), .i2c_scl_fall(2'b00), .i2c_sda_val(2'b11),
+        .i2c_scl_in(2'b11), .i2c_sda_in(2'b11),
         .i2c_scl_stretch(), .i2c_sda_pull(),
         .i2c_bus_start_gen(), .i2c_bus_stop_gen(),
         .dc_req_valid(1'b0), .dc_req_write(1'b0), .dc_req_addr(32'h0),
@@ -44,6 +43,12 @@ module tb_uvm_top;
         .dc_rsp_valid(), .dc_rsp_rdata(), .dc_rsp_error(),
         .dc_cmp_req(), .dc_cmp_write(), .dc_cmp_addr(), .dc_cmp_wdata(),
         .dc_cmp_byteen(), .dc_cmp_rdata(32'h0), .dc_cmp_done(1'b0),
+        .apb_s_psel(1'b0), .apb_s_penable(1'b0), .apb_s_pwrite(1'b0),
+        .apb_s_paddr(32'h0), .apb_s_pwdata(32'h0), .apb_s_pstrb(4'h0),
+        .apb_s_pready(), .apb_s_prdata(), .apb_s_pslverr(),
+        .apb_m_psel(), .apb_m_penable(), .apb_m_pwrite(), .apb_m_paddr(),
+        .apb_m_pwdata(), .apb_m_pstrb(),
+        .apb_m_pready(1'b1), .apb_m_prdata(32'h0), .apb_m_pslverr(1'b0),
         .csr_addr(8'h0), .csr_we(1'b0), .csr_re(1'b0),
         .csr_wdata(32'h0), .csr_rdata(),
         .link_state(vif.link_state), .link_up(vif.link_up),

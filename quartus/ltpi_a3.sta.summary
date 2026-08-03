@@ -3,12 +3,12 @@ Timing Analyzer Summary
 ------------------------------------------------------------
 
 Type  : Setup 'ltpi_clk'
-Slack : 0.003
+Slack : 0.020
 TNS   : 0.000
 Corner: Slow fix5 0C Model
 
 Type  : Hold 'ltpi_clk'
-Slack : 0.049
+Slack : 0.051
 TNS   : 0.000
 Corner: Fast fix5 0C Model
 

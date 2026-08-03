@@ -1,4 +1,4 @@
-Fitter Status : Successful - Sun Aug  2 22:58:51 2026
+Fitter Status : Successful - Mon Aug  3 08:13:47 2026
 Quartus Prime Version : 26.1.0 Build 110 03/26/2026 SC Pro Edition
 Revision Name : ltpi_a5
 Top-level Entity Name : ltpi_syn_top
@@ -7,8 +7,8 @@ Device : A5EC065AB23AE1VR0
 Timing Models : Preliminary
 Power Models : Preliminary
 Device Status : Advance
-Logic utilization (in ALMs) : 1,233 / 222,400 ( < 1 % )
-Total dedicated logic registers : 1113
+Logic utilization (in ALMs) : 1,478 / 222,400 ( < 1 % )
+Total dedicated logic registers : 1367
 Total pins : 1 / 280 ( < 1 % )
 Total block memory bits : 0 / 32,993,280 ( 0 % )
 Total RAM Blocks : 0 / 1,611 ( 0 % )

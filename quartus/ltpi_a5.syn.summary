@@ -1,9 +1,9 @@
-Synthesis Status : Successful - Sun Aug  2 22:56:42 2026
+Synthesis Status : Successful - Mon Aug  3 08:11:35 2026
 Revision Name : ltpi_a5
 Top-level Entity Name : ltpi_syn_top
 Family : Agilex 5
 Quartus Prime Version : 26.1.0 Build 110 03/26/2026 SC Pro Edition
 Device : A5EC065AB23AE1VR0
-Logic utilization estimate (in ALMs) : 281 / 222,400 ( < 1 % )
-Total dedicated logic registers : 1111
+Logic utilization estimate (in ALMs) : 1,324 / 222,400 ( < 1 % )
+Total dedicated logic registers : 1365
 Estimated DSP Blocks Post-Merging : 0

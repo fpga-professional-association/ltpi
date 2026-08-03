@@ -27,6 +27,8 @@ jobs:
           - ltpi_csr
           - ltpi_data_channel
           - ltpi_peer_decode
+          - ltpi_oem_apb
+          - ltpi_i2c_cond
     steps:
       - uses: actions/checkout@v4
       - uses: YosysHQ/setup-oss-cad-suite@v3
@@ -51,9 +53,11 @@ jobs:
             ../rtl/ltpi_pkg.sv ../rtl/ltpi_frame_rx.sv \
             ../rtl/ltpi_frame_tx.sv ../rtl/ltpi_link_fsm.sv \
             ../rtl/ltpi_gpio_channel.sv ../rtl/ltpi_uart_channel.sv \
-            ../rtl/ltpi_i2c_relay.sv ../rtl/ltpi_phy.sv \
+            ../rtl/ltpi_i2c_cond.sv ../rtl/ltpi_i2c_relay.sv \
+            ../rtl/ltpi_phy.sv \
             ../rtl/ltpi_csr.sv ../rtl/ltpi_data_channel.sv \
-            ../rtl/ltpi_peer_decode.sv ../rtl/ltpi_top.sv \
+            ../rtl/ltpi_peer_decode.sv ../rtl/ltpi_oem_apb.sv \
+            ../rtl/ltpi_top.sv \
             tb_ltpi_system.sv
           vvp tb.vvp | tee sim.log
           grep -q "ALL CHECKS PASSED" sim.log

@@ -37,8 +37,9 @@ part tables in the constraints files).
 | LL GPIO | `ll_gpio_in/out[15:0]` | refreshed every frame |
 | NL GPIO | `nl_gpio_in/out[NL_TOTAL-1:0]` | multiplexed over ⌈NL_TOTAL/16⌉ frames |
 | UART | `uart_txd_in/out`, `uart_flow_*` | 3× oversampled; flow bit per frame |
-| I2C/SMBus | `i2c_*[NUM_I2C-1:0]` | event relay; **either side may initiate** (SPDM/MCTP-ready); connect a bus-edge detector per channel (start/stop/rise/fall pulses + sampled SDA), obey `scl_stretch`/`sda_pull` as open-drain pull-downs |
+| I2C/SMBus | `i2c_scl_in/i2c_sda_in[NUM_I2C-1:0]` | RAW bus levels in - each channel has a built-in proven 50ns tSP filter + edge detect (`ltpi_i2c_cond`); **either side may initiate** (SPDM/MCTP-ready); obey `scl_stretch`/`sda_pull` as open-drain pull-downs. Speed envelope: `I2C_LIMITATIONS.md` (>=400Mbps recommended) |
 | Data | `dc_req_*` (requester), `dc_cmp_*` (completer) | 32-bit R/W with byte enables, single outstanding, tag-tracked; AVMM/APB-shaped |
+| OEM APB | `apb_s_*` (true APB completer), `apb_m_*` (true APB requester) | AMBA APB tunneled in I/O-frame OEM bytes 11-14; point a local APB master at `apb_s_*`, the far side drives its APB slave; APB protocol formally proven |
 
 **Adding an I2C channel** = bump `NUM_I2C` and connect the new index —
 the generate block, frame nibble packing (bytes 8–10), pacing, and the
@@ -77,9 +78,10 @@ decide which channels to enable against any compliant peer.
 cd sim
 iverilog -g2012 -I ../rtl -o tb.vvp ../rtl/ltpi_pkg.sv ../rtl/ltpi_frame_rx.sv \
   ../rtl/ltpi_frame_tx.sv ../rtl/ltpi_link_fsm.sv ../rtl/ltpi_gpio_channel.sv \
-  ../rtl/ltpi_uart_channel.sv ../rtl/ltpi_i2c_relay.sv ../rtl/ltpi_phy.sv \
-  ../rtl/ltpi_csr.sv ../rtl/ltpi_data_channel.sv ../rtl/ltpi_peer_decode.sv \
-  ../rtl/ltpi_top.sv tb_ltpi_system.sv
+  ../rtl/ltpi_uart_channel.sv ../rtl/ltpi_i2c_cond.sv ../rtl/ltpi_i2c_relay.sv \
+  ../rtl/ltpi_phy.sv ../rtl/ltpi_csr.sv ../rtl/ltpi_data_channel.sv \
+  ../rtl/ltpi_peer_decode.sv ../rtl/ltpi_oem_apb.sv ../rtl/ltpi_top.sv \
+  tb_ltpi_system.sv
 vvp tb.vvp                    # expect "=== ALL CHECKS PASSED ==="
 python render_waveform.py     # timing-diagram PNG from the VCD
 ```

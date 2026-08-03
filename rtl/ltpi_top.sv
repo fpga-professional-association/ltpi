@@ -15,6 +15,7 @@ module ltpi_top #(
     parameter bit ROLE_SCM = 1'b1,
     parameter int unsigned NL_TOTAL = 32,
     parameter int unsigned NUM_I2C  = 2,     // 1..6 relay channels
+    parameter int unsigned CLK_HZ   = 400_000_000, // link clock (tSP filter)
     parameter logic [15:0] PLATFORM_ID = PLATID_THIS_CORE, // Table 26 (OEM)
     // Training thresholds (spec defaults; shrink for simulation)
     parameter int unsigned DETECT_MIN_TX    = 255,
@@ -55,14 +56,12 @@ module ltpi_top #(
     output logic uart_txd_out,
     output logic uart_flow_out,
 
-    // I2C/SMBus relay bus-side interfaces, NUM_I2C channels (1..6).
-    // Channels 0-1 ride I/O-frame byte 8, 2-3 byte 9, 4-5 byte 10
-    // (spec Table 33 / Table 11 nibble packing).
-    input  logic [NUM_I2C-1:0] i2c_start_det,
-    input  logic [NUM_I2C-1:0] i2c_stop_det,
-    input  logic [NUM_I2C-1:0] i2c_scl_rise,
-    input  logic [NUM_I2C-1:0] i2c_scl_fall,
-    input  logic [NUM_I2C-1:0] i2c_sda_val,
+    // I2C/SMBus buses, NUM_I2C channels (1..6). RAW bus levels in - each
+    // channel passes a 2-FF synchronizer + proven 50ns tSP spike filter
+    // (ltpi_i2c_cond) before the relay. Channels 0-1 ride I/O-frame
+    // byte 8, 2-3 byte 9, 4-5 byte 10 (Table 33 / Table 11 packing).
+    input  logic [NUM_I2C-1:0] i2c_scl_in,
+    input  logic [NUM_I2C-1:0] i2c_sda_in,
     output logic [NUM_I2C-1:0] i2c_scl_stretch,
     output logic [NUM_I2C-1:0] i2c_sda_pull,
     output logic [NUM_I2C-1:0] i2c_bus_start_gen,
@@ -85,6 +84,26 @@ module ltpi_top #(
     output logic [3:0]  dc_cmp_byteen,
     input  logic [31:0] dc_cmp_rdata,
     input  logic        dc_cmp_done,
+
+    // OEM APB channel (tunneled in I/O-frame OEM bytes 11-14)
+    input  logic        apb_s_psel,
+    input  logic        apb_s_penable,
+    input  logic        apb_s_pwrite,
+    input  logic [31:0] apb_s_paddr,
+    input  logic [31:0] apb_s_pwdata,
+    input  logic [3:0]  apb_s_pstrb,
+    output logic        apb_s_pready,
+    output logic [31:0] apb_s_prdata,
+    output logic        apb_s_pslverr,
+    output logic        apb_m_psel,
+    output logic        apb_m_penable,
+    output logic        apb_m_pwrite,
+    output logic [31:0] apb_m_paddr,
+    output logic [31:0] apb_m_pwdata,
+    output logic [3:0]  apb_m_pstrb,
+    input  logic        apb_m_pready,
+    input  logic [31:0] apb_m_prdata,
+    input  logic        apb_m_pslverr,
 
     // CSR / debug register interface (APB/AVMM/JTAG-bridge friendly)
     input  logic [7:0]  csr_addr,
@@ -154,6 +173,7 @@ module ltpi_top #(
     // Link FSM
     // ------------------------------------------------------------------
     ltpi_pkg::frame_type_t tx_frame_type;
+    ltpi_pkg::frame_type_t tx_ftype_eff;   // driven below (data interleave)
     logic tx_frame_done;
     logic [15:0] remote_speed_caps;
     logic remote_caps_valid;
@@ -302,11 +322,21 @@ module ltpi_top #(
 
     generate
         for (genvar gi = 0; gi < NUM_I2C; gi++) begin : g_i2c
+            logic c_start, c_stop, c_rise, c_fall, c_sda;
+
+            ltpi_i2c_cond #(.CLK_HZ(CLK_HZ)) u_cond (
+                .clk(clk), .rst(rst),
+                .scl_in(i2c_scl_in[gi]), .sda_in(i2c_sda_in[gi]),
+                .scl_filt(), .sda_filt(),
+                .start_det(c_start), .stop_det(c_stop),
+                .scl_rise(c_rise), .scl_fall(c_fall), .sda_val(c_sda)
+            );
+
             ltpi_i2c_relay #(.ARB_PRIORITY(ROLE_SCM)) u_i2c (
                 .clk(clk), .rst(rst),
-                .start_det(i2c_start_det[gi]), .stop_det(i2c_stop_det[gi]),
-                .scl_rise(i2c_scl_rise[gi]), .scl_fall(i2c_scl_fall[gi]),
-                .sda_val(i2c_sda_val[gi]),
+                .start_det(c_start), .stop_det(c_stop),
+                .scl_rise(c_rise), .scl_fall(c_fall),
+                .sda_val(c_sda),
                 .scl_stretch(i2c_scl_stretch[gi]),
                 .sda_pull(i2c_sda_pull[gi]),
                 .bus_start_gen(i2c_bus_start_gen[gi]),
@@ -363,9 +393,32 @@ module ltpi_top #(
         .drx_valid(drx_valid), .drx_payload(rx_payload)
     );
 
+    // ---------------- OEM APB channel ----------------
+    logic [31:0] apb_oem_tx;
+    logic        apb_oem_taken, apb_oem_rxv;
+    assign apb_oem_taken = tx_frame_done && link_up
+                           && tx_ftype_eff == FRAME_OPERATIONAL;
+    assign apb_oem_rxv   = op_frame_good;
+
+    ltpi_oem_apb u_oem_apb (
+        .clk(clk), .rst(rst), .link_up(link_up),
+        .s_psel(apb_s_psel), .s_penable(apb_s_penable),
+        .s_pwrite(apb_s_pwrite), .s_paddr(apb_s_paddr),
+        .s_pwdata(apb_s_pwdata), .s_pstrb(apb_s_pstrb),
+        .s_pready(apb_s_pready), .s_prdata(apb_s_prdata),
+        .s_pslverr(apb_s_pslverr),
+        .m_psel(apb_m_psel), .m_penable(apb_m_penable),
+        .m_pwrite(apb_m_pwrite), .m_paddr(apb_m_paddr),
+        .m_pwdata(apb_m_pwdata), .m_pstrb(apb_m_pstrb),
+        .m_pready(apb_m_pready), .m_prdata(apb_m_prdata),
+        .m_pslverr(apb_m_pslverr),
+        .oem_tx(apb_oem_tx), .oem_tx_taken(apb_oem_taken),
+        .oem_rx_valid(apb_oem_rxv), .oem_rx(rx_payload[103:72])
+    );
+
+
     // Effective TX frame type: substitute a Data Frame into the
     // operational stream when the data channel holds a message.
-    ltpi_pkg::frame_type_t tx_ftype_eff;
     always_comb begin
         tx_ftype_eff = tx_frame_type;
         if (tx_frame_type == FRAME_OPERATIONAL && send_data)
@@ -413,6 +466,7 @@ module ltpi_top #(
                 for (int k = 0; k < 6; k++)                   // bytes 8-10
                     tx_payload[48 + 4*k +: 4] =
                         (k < NUM_I2C) ? i2c_tx_event[k] : I2C_EV_IDLE;
+                tx_payload[103:72] = apb_oem_tx;              // bytes 11-14
             end
         endcase
     end

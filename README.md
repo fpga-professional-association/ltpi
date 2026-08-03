@@ -57,25 +57,28 @@ rtl/   ltpi_pkg.sv           constants, enums, speed caps, platform IDs
        ltpi_link_fsm.sv      link training/config/operational FSM (SCM+HPM)
        ltpi_gpio_channel.sv  LL GPIO (every frame) + NL GPIO (N-frame mux)
        ltpi_uart_channel.sv  UART 3x-oversample tunneling + RTS/CTS
+       ltpi_i2c_cond.sv      2FF sync + proven 50ns tSP spike filter + edges
        ltpi_i2c_relay.sv     bidirectional I2C/SMBus event relay (SPDM-ready)
        ltpi_data_channel.sv  tag-tracked R/W data channel (AVMM/APB-style)
        ltpi_csr.sv           Table 36 debug/status/control registers
        ltpi_peer_decode.sv   peer vendor ID + Table 28 feature-row decode
+       ltpi_oem_apb.sv       OEM channel: AMBA APB tunnel (frame bytes 11-14)
        ltpi_phy.sv           SDR/DDR serdes, comma hunt, DDR bitslip
        ltpi_top.sv           full endpoint: PHY+framer+FSM+channels (NUM_I2C)
        vendor/               ALTDDIO / ODDRX1F wrappers, per-speed SDC + LPF
-formal/  *.sby (13 suites)   SymbiYosys proofs (see table below)
+formal/  *.sby (15 suites)   SymbiYosys proofs (see table below)
          ltpi_loopback.sv    SCM+HPM link composition proof
          ltpi_i2c_loopback.sv  two-relay I2C composition proof
          mutation_coverage.py  3-stage mutation study (+ mutation_report.txt)
-sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, 13 checks
+sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, 15+ checks
        render_waveform.py    VCD -> timing-diagram PNG
        cov_summary.py        Verilator coverage report
 uvm/   ltpi_if.sv, ltpi_uvm_pkg.sv, tb_uvm_top.sv, run_{questa,vcs,xcelium}
 quartus/ ltpi_syn_top.sv, build.tcl, ltpi_timing.sdc   Agilex timing closure
 docs/  USER_GUIDE.md         integration, CSR map, customization, debug
        TRACEABILITY.md       spec clause -> proof/sim mapping
-.github/workflows/verify.yml  CI: 13-suite formal matrix + system sim
+       I2C_LIMITATIONS.md    I2C-over-LTPI speed envelope (>=400Mbps rec.)
+.github/workflows/verify.yml  CI: 15-suite formal matrix + system sim
 ```
 
 ## Proof suites (all PASS)
@@ -174,15 +177,16 @@ compile-targeted at those tools rather than validated here.
 ## FPGA timing closure (Quartus Prime Pro 26.1)
 
 Fabric closure of the complete endpoint (`quartus/ltpi_syn_top.sv`:
-`ltpi_top` with NUM_I2C=2, NL=32, all channels + CSR + peer decode) at the
+`ltpi_top` with NUM_I2C=2, NL=32, all channels incl. the OEM APB tunnel,
+per-channel I2C tSP filters, CSR + peer decode) at the
 **400 MHz link clock** - the top soft-PHY operating point (400 Mbps SDR /
 800 Mbps DDR). Fastest speed grades, signoff corners, maximum placement
 effort:
 
 | Device (fastest grade) | Part | Setup slack | Hold slack | Result |
 |---|---|---|---|---|
-| **Agilex 3** -6S | A3CW135BM16AE6S | +0.003 ns | +0.049 ns | **meets 400 MHz** |
-| **Agilex 5** -1V | A5EC065AB23AE1VR0 | +0.604 ns | +0.071 ns | **meets 400 MHz** |
+| **Agilex 3** -6S | A3CW135BM16AE6S | +0.020 ns | +0.051 ns | **meets 400 MHz** |
+| **Agilex 5** -1V | A5EC065AB23AE1VR0 | +0.475 ns | +0.070 ns | **meets 400 MHz** |
 
 Reproduce: `cd quartus && quartus_sh -t build.tcl "Agilex 5"
 A5EC065AB23AE1VR0 ltpi_a5 && quartus_syn ... && quartus_fit ... &&
@@ -190,8 +194,8 @@ quartus_sta ltpi_timing -c ltpi_a5 --mode=finalize`. Pin-level DDR budgets
 are owned by the vendor I/O layer (`rtl/vendor/`); this project measures
 register-to-register fabric closure with all data ports virtual.
 
-Timing-driven RTL refinements made for closure (all re-proven, 13 suites
-green, sim 13/13): registered counter clears + one-cycle-grace exit
+Timing-driven RTL refinements made for closure (all re-proven, full
+suite matrix green, sim clean): registered counter clears + one-cycle-grace exit
 gating in the link FSM, pipelined highest-common speed computation,
 first-cycle-of-state speed-select latch with entry-cycle Link Detect
 guard, retimed I2C event-valid strobe.
@@ -208,8 +212,8 @@ formal proofs instead), plus unread CSR addresses. Rebuild:
 -fno-declone-ctor-dtor ...`, report via `verilator_coverage` +
 `sim/cov_summary.py`.
 
-**Formal property inventory**: 127 assertions, 30 assumptions, 39 cover
-points across 12 proof suites; every cover point is reached (a cover task
+**Formal property inventory**: 168 assertions, 41 assumptions, 55 cover
+points across 15 proof suites; every cover point is reached (a cover task
 fails otherwise), so 100% cover-point reachability.
 
 **Mutation coverage** (`formal/mutation_coverage.py`, mcy methodology:
@@ -246,17 +250,18 @@ FPGA-IPUG-02200 / Radiant IP 1.5.x docs; Microchip CoreLTPI UG):
 | LL GPIO (16) | ✓ | ✓ | ✓ | ✓ proven |
 | NL GPIO | ≤1024 | ✓ | ✓ | ✓ parameterized, proven |
 | UART channels | 2 | ≤24 | – | 1 lane instantiated (Table 8 field for 2; add a 2nd instance on byte 7 hi-nibble) |
-| I2C/SMBus channels | 6 | ✓ (+MCTP) | – | 1 instantiated (frame fields for 6); **bidirectional + clock stretch proven** — exceeds all three (needed for MCTP/SPDM) |
+| I2C/SMBus channels | 6 | ✓ (+MCTP) | – | 1–6 parameterized (`NUM_I2C`); raw-bus inputs with **proven 50ns tSP spike filter** per channel; **bidirectional + clock stretch proven** — exceeds all three (needed for MCTP/SPDM); envelope: `docs/I2C_LIMITATIONS.md` |
 | Data channel | AVMM + mailbox | APB | – | ✓ AVMM/APB-style, tag-tracked, proven (D1–D5) + end-to-end sim |
+| OEM channel | frame fields | – | – | ✓ **AMBA APB tunnel over OEM bytes 11-14, APB protocol proven both faces (O1–O5)** + end-to-end sim |
 | CSR block | ✓ (AVMM, peakRDL) | ✓ | ✓ | ✓ Table 36 subset proven (status/state/speed, RWC errors, counters, link control) |
 | Link training | ✓ | ✓ | GPIO-profile | ✓ proven both roles + composition |
-| Speeds | 25–1000MHz | ✓ | input-clock based | 25M/200M/400M SDR + 400M DDR wired; caps word extensible to all Table 21 rates |
+| Speeds | 25–1000MHz | ✓ | input-clock based | full Table 21 ladder (`CAPS_FULL` to 1GHz DDR / 2Gbps); soft PHY through 400M DDR, SERDES beyond; **timing-closed at 400MHz on Agilex 3 -6S / Agilex 5 -1V** |
 | Debug | debug ports | debug ports | – | CSR debug regs + status outputs + VCD flows |
-| Formal proofs | – | – | – | **12 suites, unbounded induction** (unique to this core) |
+| Formal proofs | – | – | – | **15 suites, unbounded induction** (unique to this core) |
 
-Known deltas: OEM channels/frames and the 6-channel I2C / 24-UART scale
-are structural replication of the proven single-channel modules (frame
-bytes 8-10 and 7-hi are reserved for them in the payload mux); the
+Known deltas: the 24-UART scale is structural replication of the proven
+single-channel module (frame byte 7-hi is reserved in the payload mux);
+OEM bytes 11-14 now carry the proven APB tunnel (`ltpi_oem_apb`); the
 spec's full CSR register file beyond the Table 36 subset (platform IDs,
 advertise capability mirrors) follows the same proven RWC/RO patterns.
 
