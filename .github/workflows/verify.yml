@@ -1,0 +1,61 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  formal:
+    name: formal / ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - ltpi_crc8
+          - ltpi_frame_rx
+          - ltpi_frame_tx
+          - ltpi_link_fsm
+          - ltpi_gpio_channel
+          - ltpi_uart_channel
+          - ltpi_i2c_relay
+          - ltpi_i2c_loopback
+          - ltpi_phy
+          - ltpi_loopback
+          - ltpi_csr
+          - ltpi_data_channel
+          - ltpi_peer_decode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: YosysHQ/setup-oss-cad-suite@v3
+      - name: Run SymbiYosys suite (all tasks must PASS)
+        working-directory: formal
+        run: sby -f ${{ matrix.suite }}.sby
+
+  sim:
+    name: system simulation (Icarus)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: YosysHQ/setup-oss-cad-suite@v3
+      - name: Build and run self-checking loopback TB
+        working-directory: sim
+        run: |
+          iverilog -g2012 -I ../rtl -o tb.vvp \
+            ../rtl/ltpi_pkg.sv ../rtl/ltpi_frame_rx.sv \
+            ../rtl/ltpi_frame_tx.sv ../rtl/ltpi_link_fsm.sv \
+            ../rtl/ltpi_gpio_channel.sv ../rtl/ltpi_uart_channel.sv \
+            ../rtl/ltpi_i2c_relay.sv ../rtl/ltpi_phy.sv \
+            ../rtl/ltpi_csr.sv ../rtl/ltpi_data_channel.sv \
+            ../rtl/ltpi_peer_decode.sv ../rtl/ltpi_top.sv \
+            tb_ltpi_system.sv
+          vvp tb.vvp | tee sim.log
+          grep -q "ALL CHECKS PASSED" sim.log
+      - name: Upload sim log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-log
+          path: sim/sim.log

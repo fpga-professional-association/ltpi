@@ -1,4 +1,6 @@
-# Formally Verified LTPI Implementation (OCP DC-SCM 2.0)
+# Formally Verified LTPI Implementation
+
+[![verify](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml/badge.svg)](https://github.com/fpga-professional-association/ltpi/actions/workflows/verify.yml)
 
 SystemVerilog implementation, machine-checked formal proofs, simulation, and
 UVM testbench for the **LVDS Tunneling Protocol & Interface (LTPI)**.
