@@ -141,34 +141,42 @@ module ltpi_link_fsm #(
 
     // Link Detect exit: (>=255 TX and >=7 consecutive good RX) OR any Link
     // Speed frame received (other side is already ahead).
+    // All counter-threshold exits are gated by !changed_q / !adv_clear_q:
+    // the counters clear one cycle after a state change (registered clears
+    // for timing), so their stale values must not justify an exit during
+    // the entry cycle.
     assign detect_done = (tx_cnt >= TXW'(DETECT_MIN_TX)
-                          && rx_cnt >= 4'(DETECT_MIN_RX))
+                          && rx_cnt >= 4'(DETECT_MIN_RX) && !changed_q)
                          || rx_good_speed;
 
     // Link Speed exit: SCM by TX count, HPM by RX count (Note 3).
-    assign speed_done    = ROLE_SCM ? (tx_cnt >= TXW'(SPEED_SCM_MIN_TX))
-                                    : (rx_cnt >= 4'(SPEED_HPM_MIN_RX));
-    assign speed_timeout = tx_cnt >= TXW'(SPEED_TIMEOUT_TX);
+    assign speed_done    = !changed_q
+                           && (ROLE_SCM ? (tx_cnt >= TXW'(SPEED_SCM_MIN_TX))
+                                        : (rx_cnt >= 4'(SPEED_HPM_MIN_RX)));
+    assign speed_timeout = tx_cnt >= TXW'(SPEED_TIMEOUT_TX) && !changed_q;
 
-    assign adv_align_done    = rx_cnt >= 4'(ALIGN_MIN_RX);
+    assign adv_align_done    = rx_cnt >= 4'(ALIGN_MIN_RX) && !changed_q;
     // 100ms alignment timeout (2.1v1.0) - PLL relock allowance, separate
     // from the 1ms minimum-TX time used in ST_ADV.
-    assign adv_align_timeout = adv_timer >= ATW'(ADV_ALIGN_TIMEOUT);
+    assign adv_align_timeout = adv_timer >= ATW'(ADV_ALIGN_TIMEOUT)
+                               && !adv_clear_q;
 
     // Advertise exit: SCM proceeds to Configure once the 1ms minimum TX time
     // elapsed, >=3 good frames arrived and a configuration was selected.
     // HPM leaves as soon as a matching Configure shows up (even from the
     // alignment part - receiving it proves alignment).
     assign adv_done = ROLE_SCM
-                      ? (adv_timer >= ATW'(ADV_MIN_CYCLES)
-                         && rx_cnt >= 4'(ADV_MIN_RX) && cfg_ready)
+                      ? (adv_timer >= ATW'(ADV_MIN_CYCLES) && !adv_clear_q
+                         && rx_cnt >= 4'(ADV_MIN_RX) && !changed_q
+                         && cfg_ready)
                       : (rx_good_cfg && rx_cfg_match);
 
     // Configure/Accept exit into Operational.
     assign cfg_done    = ROLE_SCM ? (rx_good_acc && rx_cfg_match)
                                   : rx_good_op;
     assign cfg_timeout = tx_cnt >= (ROLE_SCM ? TXW'(CFG_MAX_TX)
-                                             : TXW'(ACC_MAX_TX));
+                                             : TXW'(ACC_MAX_TX))
+                         && !changed_q;
 
     always_comb begin
         nstate = state;
@@ -178,7 +186,8 @@ module ltpi_link_fsm #(
             case (state)
                 ST_DETECT_ALIGN:
                     if (rx_good_speed)        nstate = ST_SPEED;
-                    else if (rx_cnt >= 4'(ALIGN_MIN_RX)) nstate = ST_DETECT;
+                    else if (rx_cnt >= 4'(ALIGN_MIN_RX) && !changed_q)
+                                              nstate = ST_DETECT;
                 ST_DETECT:
                     if (detect_done)          nstate = ST_SPEED;
                 ST_SPEED:
@@ -207,6 +216,20 @@ module ltpi_link_fsm #(
     logic state_change;
     assign state_change = (nstate != state);
 
+    // Registered change detect for counter clears: reg-to-reg 3-bit
+    // compare instead of the full nstate decode cone (the frame_type ->
+    // rx decode -> nstate -> counter-clear path was the Agilex 3 critical
+    // path at 400 MHz). Clears land on the first cycle of the new state;
+    // the one-event window shift is absorbed by the ">= threshold" exit
+    // semantics (spec says "at least N").
+    ltpi_pkg::link_state_t state_prev_q;
+    logic changed_q;
+    always_ff @(posedge clk) begin
+        if (rst) state_prev_q <= ST_DETECT_ALIGN;
+        else     state_prev_q <= state;
+    end
+    assign changed_q = (state != state_prev_q);
+
     // ------------------------------------------------------------------
     // State & counters
     // ------------------------------------------------------------------
@@ -220,7 +243,7 @@ module ltpi_link_fsm #(
 
     // Per-state TX counter, saturating at 255, cleared on any state change.
     always_ff @(posedge clk) begin
-        if (rst || state_change)
+        if (rst || changed_q)
             tx_cnt <= '0;
         else if (tx_frame_done && tx_cnt != '1)
             tx_cnt <= tx_cnt + 1'b1;
@@ -241,7 +264,7 @@ module ltpi_link_fsm #(
     end
 
     always_ff @(posedge clk) begin
-        if (rst || state_change)
+        if (rst || changed_q)
             rx_cnt <= '0;
         else if (state == ST_DETECT && rx_frame_valid && !rx_crc_ok)
             rx_cnt <= '0;                          // consecutive requirement
@@ -251,7 +274,7 @@ module ltpi_link_fsm #(
 
     // Consecutive-lost-frame counter for the policing states.
     always_ff @(posedge clk) begin
-        if (rst || state_change || !policing)
+        if (rst || changed_q || !policing)
             lost_cnt <= '0;
         else if (rx_lost_event)
             lost_cnt <= lost_cnt + 1'b1;   // link_lost fires before overflow
@@ -262,7 +285,7 @@ module ltpi_link_fsm #(
     // CRC-dropped IO frame run (Operational only). Good DATA frames do NOT
     // reset it - only a correctly received IO frame does (2.1v1.1).
     always_ff @(posedge clk) begin
-        if (rst || state_change || state != ST_OPERATIONAL)
+        if (rst || changed_q || state != ST_OPERATIONAL)
             io_bad_run <= '0;
         else if (io_crc_drop)
             io_bad_run <= io_bad_run + 1'b1;  // link_lost fires at the limit
@@ -271,13 +294,34 @@ module ltpi_link_fsm #(
     end
 
     // Advertise-phase timer (PLL relock compensation / minimum TX time).
+    // Timing-friendly structure: the wide clear/saturate decisions are
+    // REGISTERED single-bit flags, so the 20+ bit counter sees only a
+    // 1-level enable - the state-decode fanout was the critical path at
+    // 400 MHz on Agilex. Semantics shift by one cycle on entry, which is
+    // noise against the ms-scale budgets.
+    logic adv_clear_q;   // clear the timer this cycle
+    logic adv_sat_q;     // timer reached ATW_MAX - stop incrementing
+    logic nstate_in_adv;
+    assign nstate_in_adv = (nstate == ST_ADV_ALIGN) || (nstate == ST_ADV);
+
     always_ff @(posedge clk) begin
-        if (rst || (state != ST_ADV_ALIGN && state != ST_ADV))
+        if (rst) begin
+            adv_clear_q <= 1'b1;
+            adv_sat_q   <= 1'b0;
+        end else begin
+            adv_clear_q <= !nstate_in_adv || (nstate != state);
+            if (!nstate_in_adv || (nstate != state))
+                adv_sat_q <= 1'b0;
+            else if (adv_timer == ATW'(ATW_MAX - 1) && !adv_clear_q)
+                adv_sat_q <= 1'b1;
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst || adv_clear_q)
             adv_timer <= '0;
-        else if (state_change)
-            adv_timer <= '0;               // restart on ALIGN -> ADV
-        else if (adv_timer != ATW'(ATW_MAX))
-            adv_timer <= adv_timer + 1'b1; // saturate
+        else if (!adv_sat_q)
+            adv_timer <= adv_timer + 1'b1; // saturates at ATW_MAX
     end
 
     // ------------------------------------------------------------------
@@ -328,27 +372,54 @@ module ltpi_link_fsm #(
         end
     endfunction
 
+    // Timing: the highest-common computation (16-bit priority encode) is
+    // pipelined continuously from the REGISTERED capability words, so the
+    // transition latch below sees a precomputed value. Capabilities are
+    // static straps, so the one-cycle pipeline is value-equivalent.
+    logic [15:0] computed_sel_q;
+    always_ff @(posedge clk) begin
+        computed_sel_q <= ((common_caps & SPEED_MASK) != 0
+                           ? highest_bit(common_caps & SPEED_MASK)
+                           : 16'h0001)
+                          | (local_speed_caps[15] & remote_speed_caps[15]
+                             ? 16'h8000 : 16'h0000);
+    end
+
+    // Timing: the selection latches on the FIRST CYCLE of ST_SPEED (all
+    // registered compares) instead of inside the nstate transition cone.
+    // The adopt decision/payload from the transition cycle are carried in
+    // 1-cycle delay registers; the RX payload itself is stable for a full
+    // frame time. While the latch is pending (entry cycle), tx_frame_type
+    // keeps emitting Link Detect so no Link Speed frame ever carries a
+    // stale select.
+    logic        adopt_q;
+    logic [15:0] adopt_payload_q;
+    always_ff @(posedge clk) begin
+        adopt_q         <= rx_good_speed;
+        adopt_payload_q <= rx_speed_payload;
+    end
+
+    logic entering_speed_q;
+    assign entering_speed_q = (state == ST_SPEED)
+                              && (state_prev_q == ST_DETECT
+                                  || state_prev_q == ST_DETECT_ALIGN);
+
     always_ff @(posedge clk) begin
         if (rst) begin
             speed_select <= '0;
             speed_valid  <= 1'b0;
-        end else if ((state == ST_DETECT || state == ST_DETECT_ALIGN)
-                     && nstate == ST_SPEED) begin
-            if (rx_good_speed)
+        end else if (entering_speed_q) begin
+            if (adopt_q)
                 // Exit forced by a peer already in Link Speed: adopt the
                 // Speed Select it sent (we may never have seen its caps).
-                speed_select <= adopt_select(rx_speed_payload,
+                speed_select <= adopt_select(adopt_payload_q,
                                              local_speed_caps);
             else
                 // Normal exit: highest common frequency from the exchanged
-                // capabilities (spec 4.1.1.2).
-                speed_select <= ((common_caps & SPEED_MASK) != 0
-                                 ? highest_bit(common_caps & SPEED_MASK)
-                                 : 16'h0001)
-                                | (local_speed_caps[15] & remote_speed_caps[15]
-                                   ? 16'h8000 : 16'h0000);
+                // capabilities (spec 4.1.1.2), precomputed above.
+                speed_select <= computed_sel_q;
             speed_valid  <= 1'b1;
-        end else if (nstate == ST_DETECT_ALIGN && state != ST_DETECT_ALIGN) begin
+        end else if (state == ST_DETECT_ALIGN && state_prev_q != ST_DETECT_ALIGN) begin
             speed_valid  <= 1'b0;          // retraining renegotiates speed
         end
     end
@@ -359,7 +430,11 @@ module ltpi_link_fsm #(
     always_comb begin
         case (state)
             ST_DETECT_ALIGN, ST_DETECT: tx_frame_type = FRAME_LINK_DETECT;
-            ST_SPEED:                   tx_frame_type = FRAME_LINK_SPEED;
+            // Entry-cycle guard: never emit a Link Speed frame before the
+            // (one-cycle-retimed) selection latch has fired.
+            ST_SPEED:                   tx_frame_type = speed_valid
+                                                        ? FRAME_LINK_SPEED
+                                                        : FRAME_LINK_DETECT;
             ST_ADV_ALIGN, ST_ADV:       tx_frame_type = FRAME_ADVERTISE;
             ST_CFG_ACC:                 tx_frame_type = ROLE_SCM ? FRAME_CONFIGURE
                                                                  : FRAME_ACCEPT;
@@ -451,6 +526,19 @@ module ltpi_link_fsm #(
     // P8: speed selection is sound whenever valid: exactly one speed bit,
     // and it is a speed the local side really supports; when the remote
     // capabilities are known-compatible it is common to both.
+    // P8b: the pipelined compute register is always a well-formed select
+    // (one-hot supported speed or the 25MHz fallback) - it is a pure
+    // registered function of the constrained capability words.
+    logic [15:0] f_csel_bits;
+    assign f_csel_bits = computed_sel_q & SPEED_MASK;
+    always_comb
+        if (f_past_valid) begin
+            assert (f_csel_bits != 0
+                    && (f_csel_bits & (f_csel_bits - 1)) == 0);
+            assert ((f_csel_bits & local_speed_caps) == f_csel_bits
+                    || f_csel_bits == 16'h0001);
+        end
+
     logic [15:0] f_speed_bits;
     assign f_speed_bits = speed_select & SPEED_MASK;
     always_comb begin
@@ -471,11 +559,18 @@ module ltpi_link_fsm #(
                                                     : 3'(ADV_LOST_LIMIT))
                 || !policing);
         assert (adv_timer <= ATW'(ATW_MAX));
-        if (!policing) assert (lost_cnt == '0);
+        // Saturation coupling: MAX is only ever held frozen (or a clear
+        // is already in flight from an exit taken at MAX-1).
+        if (adv_timer == ATW'(ATW_MAX))
+            assert (adv_sat_q || adv_clear_q);
+        // Registered clears grant a one-cycle grace window (changed_q) on
+        // state entry before the zero-invariants apply.
+        if (!policing && !changed_q) assert (lost_cnt == '0);
         // Refined IO-drop budget (2.1v1.1): the run never reaches the
         // limit inside Operational - link_lost fires first.
         assert (io_bad_run < 2'(IO_LOST_LIMIT) || state != ST_OPERATIONAL);
-        if (state != ST_OPERATIONAL) assert (io_bad_run == '0);
+        if (state != ST_OPERATIONAL && !changed_q)
+            assert (io_bad_run == '0);
         end
     end
 
@@ -484,7 +579,8 @@ module ltpi_link_fsm #(
     // a select word to put in them).
     always_comb
         if (f_past_valid
-            && (state == ST_SPEED || state == ST_ADV_ALIGN || state == ST_ADV
+            && ((state == ST_SPEED && !entering_speed_q)
+                || state == ST_ADV_ALIGN || state == ST_ADV
                 || state == ST_CFG_ACC || state == ST_OPERATIONAL))
             assert (speed_valid);
 
@@ -494,7 +590,7 @@ module ltpi_link_fsm #(
     always_comb
         if (f_past_valid
             && (state == ST_DETECT || state == ST_DETECT_ALIGN)
-            && rx_cnt != 0)
+            && rx_cnt != 0 && !changed_q)
             assert (remote_caps_valid);
 
     // P10: Configure retry budget (Table 43): leaving CFG for Advertise

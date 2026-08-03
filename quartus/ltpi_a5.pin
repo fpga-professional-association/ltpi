@@ -1,0 +1,923 @@
+ -- Copyright (C) 2026  Altera Corporation. All rights reserved.
+ -- Your use of Altera Corporation's design tools, logic functions 
+ -- and other software and tools, and any partner logic 
+ -- functions, and any output files from any of the foregoing 
+ -- (including device programming or simulation files), and any 
+ -- associated documentation or information are expressly subject 
+ -- to the terms and conditions of the Altera Program License 
+ -- Subscription Agreement, the Altera Quartus Prime License Agreement,
+ -- the Altera IP License Agreement, or other applicable license
+ -- agreement, including, without limitation, that your use is for
+ -- the sole purpose of programming logic devices manufactured by
+ -- Altera and sold by Altera or its authorized distributors.  Please
+ -- refer to the Altera Software License Subscription Agreements 
+ -- on the Quartus Prime software download page.
+ -- 
+ -- This is a Quartus Prime output file. It is for reporting purposes only, and is
+ -- not intended for use as a Quartus Prime input file. This file cannot be used
+ -- to make Quartus Prime pin assignments - for instructions on how to make pin
+ -- assignments, please see Quartus Prime help.
+ ---------------------------------------------------------------------------------
+
+
+
+ ---------------------------------------------------------------------------------
+ -- NC            : No Connect. This pin has no internal connection to the device.
+ -- DNU           : Do Not Use. This pin MUST NOT be connected.
+ -- VCCINT        : Dedicated power pin, which MUST be connected to VCC  (VID1).
+ -- VCCIO         : Dedicated power pin, which MUST be connected to specific voltage
+ --                 of its bank.
+ --                  Bank 3A_T:       1.2V
+ --                  Bank 3A_B:  1.2V
+ --                  Bank 5A:  3.3V
+ --                  Bank 5B:  3.3V
+ --                  Bank 6A:  3.3V
+ --                  Bank 6B:  3.3V
+ --                  Bank 6C:  3.3V
+ --                  Bank 6D:  3.3V
+ -- GND           : Dedicated ground pin. Dedicated GND pins MUST be connected to GND.
+ --                  It can also be used to report unused dedicated pins. The connection
+ --                  on the board for unused dedicated pins depends on whether this will
+ --                  be used in a future design. One example is device migration. When
+ --                  using device migration, refer to the device pin-tables. If it is a
+ --                  GND pin in the pin table or if it will not be used in a future design
+ --                  for another purpose the it MUST be connected to GND. If it is an unused
+ --                  dedicated pin, then it can be connected to a valid signal on the board
+ --                  (low, high, or toggling) if that signal is required for a different
+ --                  revision of the design.
+ -- GND+          : Unused input pin. It can also be used to report unused dual-purpose pins.
+ --                  This pin should be connected to GND. It may also be connected  to a
+ --                  valid signal  on the board  (low, high, or toggling)  if that signal
+ --                  is required for a different revision of the design.
+ -- RESERVED      : Unused I/O pin, which MUST be left unconnected.
+ -- RESERVED_INPUT    : Pin is tri-stated and should be connected to the board.
+ -- RESERVED_INPUT_WITHOUT_WEAK_PULLUP : Pin is tri-stated without internal weak pull-up resistor.
+ -- RESERVED_INPUT_WITH_WEAK_PULLUP    : Pin is tri-stated with internal weak pull-up resistor.
+ -- RESERVED_INPUT_WITH_BUS_HOLD       : Pin is tri-stated with bus-hold circuitry.
+ -- RESERVED_OUTPUT_DRIVEN_HIGH        : Pin is output driven high.
+ -- GXB_NC        : Unused GXB Transmitter or dedicated clock output pin. This pin
+ --                 must not be connected.
+ -- VREFP_ADC      : If no external reference is supplied, always connect the VREFP_ADC pin to GND.
+ --                  See Pin Connection Guidelines for details.
+ -- VREFN_ADC      : If no external reference is supplied, always connect the VREFN_ADC pin to GND.
+ --                  See Pin Connection Guidelines for details.
+ -- VSIGP          : Tie this pin to GND if you do not use the Voltage Sensor feature.
+ --                  See Pin Connection Guidelines for details.
+ -- VSIGN          : Tie this pin to GND if you do not use the Voltage Sensor feature.
+ --                  See Pin Connection Guidelines for details.
+ -- DTS_CALIB      : Pins are used for Calibration of the temperature sensor during manufacturing.
+ --                  They can be left open on board when not in use.
+ -- RREF_SDM       : Pin is reference resister input for the PLLs of the SDM interface. 
+ --                  See Pin Connection Guidelines for details.
+ ---------------------------------------------------------------------------------
+
+
+
+ ---------------------------------------------------------------------------------
+ -- Pin directions (input, output or bidir) are based on device operating in user mode.
+ ---------------------------------------------------------------------------------
+
+Quartus Prime Version 26.1.0 Build 110 03/26/2026 SC Pro Edition
+CHIP  "ltpi_a5"  ASSIGNED TO AN: A5EC065AB23AE1VR0
+
+Pin Name/Usage               : Location  : Dir.   : I/O Standard      : Voltage : I/O Bank  : User Assignment : Package Delay
+-----------------------------------------------------------------------------------------------------------------------------
+GND                          : A4        : gnd    :                   :         :           :                 : --           
+GND                          : A8        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A12       :        :                   : 1.2V    : 3A_T      :                 : 125ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A16       :        :                   : 1.2V    : 3A_T      :                 : 126ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A18       :        :                   : 1.2V    : 3A_T      :                 : 104ps        
+GND                          : A20       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A23       :        :                   : 1.2V    : 3A_T      :                 : 108ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A25       :        :                   : 1.2V    : 3A_T      :                 : 118ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A26       :        :                   : 1.2V    : 3A_B      :                 : 83ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A29       :        :                   : 1.2V    : 3A_B      :                 : 78ps         
+GND                          : A32       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A34       :        :                   : 1.2V    : 3A_B      :                 : 78ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A37       :        :                   : 1.2V    : 3A_B      :                 : 74ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A40       :        :                   : 1.2V    : 3A_B      :                 : 71ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : A42       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+GND                          : A44       : gnd    :                   :         :           :                 : --           
+NC                           : A47       :        :                   :         :           :                 : --           
+NC                           : A49       :        :                   :         :           :                 : --           
+NC                           : A51       :        :                   :         :           :                 : --           
+NC                           : A54       :        :                   :         :           :                 : --           
+GND                          : A57       : gnd    :                   :         :           :                 : --           
+NC                           : A59       :        :                   :         :           :                 : --           
+NC                           : A61       :        :                   :         :           :                 : --           
+NC                           : A63       :        :                   :         :           :                 : --           
+NC                           : A65       :        :                   :         :           :                 : --           
+GND                          : A68       : gnd    :                   :         :           :                 : --           
+NC                           : A71       :        :                   :         :           :                 : --           
+NC                           : A73       :        :                   :         :           :                 : --           
+NC                           : A76       :        :                   :         :           :                 : --           
+GND                          : A78       : gnd    :                   :         :           :                 : --           
+GND                          : A80       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AA1       :        :                   : 3.3V    : 6D        :                 : 60ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AA2       :        :                   : 3.3V    : 6D        :                 : 61ps         
+GND                          : AB5       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AB7       :        :                   : 3.3V    : 6C        :                 : 51ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AB10      :        :                   : 3.3V    : 6C        :                 : 48ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AB14      :        :                   : 3.3V    : 6C        :                 : 43ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AC19      :        :                   : 3.3V    : 6C        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AC22      :        :                   : 3.3V    : 6C        :                 : 54ps         
+VCCIO_HVIO_6D                : AC25      : power  :                   : 3.3V    : 6D        :                 : --           
+VCCIO_HVIO_6C                : AC27      : power  :                   : 3.3V    : 6C        :                 : --           
+VCCP                         : AC30      : power  :                   : VID     :           :                 : --           
+VCCIO_PIO_3A_T               : AC33      : power  :                   : 1.2V    : 3A_T      :                 : --           
+GND                          : AC35      : gnd    :                   :         :           :                 : --           
+DNU                          : AC39      :        :                   :         :           :                 : --           
+GND                          : AC41      : gnd    :                   :         :           :                 : --           
+GND                          : AC45      : gnd    :                   :         :           :                 : --           
+GND                          : AC48      : gnd    :                   :         :           :                 : --           
+GND                          : AC50      : gnd    :                   :         :           :                 : --           
+GND                          : AC53      : gnd    :                   :         :           :                 : --           
+GND                          : AC56      : gnd    :                   :         :           :                 : --           
+GND                          : AC58      : gnd    :                   :         :           :                 : --           
+DNU                          : AC61      :        :                   :         :           :                 : --           
+APROBE_GTSL1C_CH3            : AC64      :        :                   :         :           :                 : --           
+APROBE2_GTSL1C               : AC66      :        :                   :         :           :                 : --           
+GND                          : AC69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AC72      :        :                   :         : 1C        :                 : 42ps         
+GXB_NC                       : AC75      :        :                   :         : 1C        :                 : 42ps         
+GND                          : AC77      : gnd    :                   :         :           :                 : --           
+GND                          : AC79      : gnd    :                   :         :           :                 : --           
+GND                          : AC81      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AD1       :        :                   : 3.3V    : 6D        :                 : 64ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AD2       :        :                   : 3.3V    : 6D        :                 : 62ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AE5       :        :                   : 3.3V    : 6C        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AE7       :        :                   : 3.3V    : 6C        :                 : 59ps         
+GND                          : AE10      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AE14      :        :                   : 3.3V    : 6C        :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AF19      :        :                   : 3.3V    : 6C        :                 : 51ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AF22      :        :                   : 3.3V    : 6C        :                 : 72ps         
+GND                          : AF25      : gnd    :                   :         :           :                 : --           
+VCCPT_HVIO                   : AF27      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AF30      : gnd    :                   :         :           :                 : --           
+VCCP                         : AF33      : power  :                   : VID     :           :                 : --           
+VCCP                         : AF35      : power  :                   : VID     :           :                 : --           
+GND                          : AF39      : gnd    :                   :         :           :                 : --           
+VCCP                         : AF41      : power  :                   : VID     :           :                 : --           
+GND                          : AF45      : gnd    :                   :         :           :                 : --           
+GND                          : AF48      : gnd    :                   :         :           :                 : --           
+GND                          : AF50      : gnd    :                   :         :           :                 : --           
+GND                          : AF53      : gnd    :                   :         :           :                 : --           
+GND                          : AF56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AF58      : power  :                   : 0.8V    :           :                 : --           
+VCCEHT_GTSL1C                : AF61      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AF64      : gnd    :                   :         :           :                 : --           
+APROBE_GTSL1C_CH2            : AF66      :        :                   :         :           :                 : --           
+GND                          : AF69      : gnd    :                   :         :           :                 : --           
+GND                          : AF72      : gnd    :                   :         :           :                 : --           
+GND                          : AF75      : gnd    :                   :         :           :                 : --           
+GND                          : AF77      : gnd    :                   :         :           :                 : --           
+GND                          : AF79      :        :                   :         : 1C        :                 : 47ps         
+GND                          : AF81      :        :                   :         : 1C        :                 : 47ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AG1       :        :                   : 3.3V    : 6D        :                 : 68ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AG2       :        :                   : 3.3V    : 6D        :                 : 59ps         
+GND                          : AH1       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AH2       :        :                   : 3.3V    : 6D        :                 : 60ps         
+GND                          : AJ19      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AJ22      :        :                   : 3.3V    : 6C        :                 : 63ps         
+VCCPT_HVIO                   : AJ25      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AJ27      : gnd    :                   :         :           :                 : --           
+NC                           : AJ30      :        :                   :         :           :                 : --           
+VCCPT                        : AJ33      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AJ35      : gnd    :                   :         :           :                 : --           
+GND                          : AJ39      : gnd    :                   :         :           :                 : --           
+GND                          : AJ41      : gnd    :                   :         :           :                 : --           
+GND                          : AJ45      : gnd    :                   :         :           :                 : --           
+GND                          : AJ48      : gnd    :                   :         :           :                 : --           
+GND                          : AJ50      : gnd    :                   :         :           :                 : --           
+GND                          : AJ53      : gnd    :                   :         :           :                 : --           
+GND                          : AJ56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AJ58      : power  :                   : 0.8V    :           :                 : --           
+GND                          : AJ61      : gnd    :                   :         :           :                 : --           
+VCCEHT_GTSL1C                : AJ64      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AJ66      : gnd    :                   :         :           :                 : --           
+GND                          : AJ69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AJ72      :        :                   :         : 1C        :                 : 41ps         
+GXB_NC                       : AJ75      :        :                   :         : 1C        :                 : 41ps         
+GND                          : AJ77      : gnd    :                   :         :           :                 : --           
+GND                          : AJ79      : gnd    :                   :         :           :                 : --           
+GND                          : AJ81      : gnd    :                   :         :           :                 : --           
+GND                          : AK5       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AK7       :        :                   : 3.3V    : 6C        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AK10      :        :                   : 3.3V    : 6C        :                 : 64ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AK14      :        :                   : 3.3V    : 6C        :                 : 68ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AL1       :        :                   : 3.3V    : 6D        :                 : 64ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AL2       :        :                   : 3.3V    : 6D        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AM19      :        :                   : 3.3V    : 6C        :                 : 95ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AM22      :        :                   : 3.3V    : 6C        :                 : 75ps         
+GND                          : AM25      : gnd    :                   :         :           :                 : --           
+DNU                          : AM27      :        :                   :         :           :                 : --           
+NC                           : AM30      :        :                   :         :           :                 : --           
+GND                          : AM33      : gnd    :                   :         :           :                 : --           
+VCCPT                        : AM35      : power  :                   : 1.8V    :           :                 : --           
+DNU                          : AM39      :        :                   :         :           :                 : --           
+GND                          : AM41      : gnd    :                   :         :           :                 : --           
+VCC                          : AM45      : power  :                   : VID     :           :                 : --           
+VCC                          : AM48      : power  :                   : VID     :           :                 : --           
+GND                          : AM50      : gnd    :                   :         :           :                 : --           
+GND                          : AM53      : gnd    :                   :         :           :                 : --           
+GND                          : AM56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AM58      : power  :                   : 0.8V    :           :                 : --           
+APROBE_GTSL1B_CH3            : AM61      :        :                   :         :           :                 : --           
+VCCERT_GTSL1C                : AM64      : power  :                   : 1.0V    :           :                 : --           
+GXB_NC                       : AM66      :        :                   :         : 1C        :                 : 35ps         
+GXB_NC                       : AM69      :        :                   :         : 1C        :                 : 37ps         
+GND                          : AM72      : gnd    :                   :         :           :                 : --           
+GND                          : AM75      : gnd    :                   :         :           :                 : --           
+GND                          : AM77      : gnd    :                   :         :           :                 : --           
+GND                          : AM79      :        :                   :         : 1C        :                 : 45ps         
+GND                          : AM81      :        :                   :         : 1C        :                 : 45ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AN1       :        :                   : 3.3V    : 6D        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AN2       :        :                   : 3.3V    : 6D        :                 : 63ps         
+GND                          : AP6       : gnd    :                   :         :           :                 : --           
+GND                          : AP9       : gnd    :                   :         :           :                 : --           
+GND                          : AP13      : gnd    :                   :         :           :                 : --           
+GND                          : AP17      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : AP19      :        :                   : 3.3V    : 6C        :                 : 98ps         
+NC                           : AP22      :        :                   :         :           :                 : --           
+DNU                          : AP25      :        :                   :         :           :                 : --           
+DNU                          : AP27      :        :                   :         :           :                 : --           
+GND                          : AP30      : gnd    :                   :         :           :                 : --           
+VCC                          : AP33      : power  :                   : VID     :           :                 : --           
+VCC                          : AP35      : power  :                   : VID     :           :                 : --           
+GND                          : AP39      : gnd    :                   :         :           :                 : --           
+VCC                          : AP41      : power  :                   : VID     :           :                 : --           
+VCC                          : AP45      : power  :                   : VID     :           :                 : --           
+GND                          : AP48      : gnd    :                   :         :           :                 : --           
+VCC                          : AP50      : power  :                   : VID     :           :                 : --           
+VCC                          : AP53      : power  :                   : VID     :           :                 : --           
+GND                          : AP56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AP58      : power  :                   : 0.8V    :           :                 : --           
+VCCERT_GTSL1C                : AP61      : power  :                   : 1.0V    :           :                 : --           
+VCCERT_GTSL1C                : AP64      : power  :                   : 1.0V    :           :                 : --           
+GND                          : AP66      : gnd    :                   :         :           :                 : --           
+GND                          : AP69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AP72      :        :                   :         : 1C        :                 : 33ps         
+GXB_NC                       : AP75      :        :                   :         : 1C        :                 : 33ps         
+GND                          : AP77      : gnd    :                   :         :           :                 : --           
+GND                          : AP79      : gnd    :                   :         :           :                 : --           
+GND                          : AP81      : gnd    :                   :         :           :                 : --           
+GND                          : AR1       : gnd    :                   :         :           :                 : --           
+GND                          : AR3       : gnd    :                   :         :           :                 : --           
+GND                          : AR6       : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AR9       :        :                   :         : 4C        :                 : 53ps         
+GXB_NC                       : AR13      :        :                   :         : 4C        :                 : 53ps         
+GND                          : AR17      : gnd    :                   :         :           :                 : --           
+GND                          : AR19      : gnd    :                   :         :           :                 : --           
+GND                          : AR22      : gnd    :                   :         :           :                 : --           
+GND                          : AR25      : gnd    :                   :         :           :                 : --           
+GND                          : AR27      : gnd    :                   :         :           :                 : --           
+NC                           : AR30      :        :                   :         :           :                 : --           
+VCC                          : AR33      : power  :                   : VID     :           :                 : --           
+GND                          : AR35      : gnd    :                   :         :           :                 : --           
+VCC                          : AR39      : power  :                   : VID     :           :                 : --           
+VCC                          : AR41      : power  :                   : VID     :           :                 : --           
+GND                          : AR45      : gnd    :                   :         :           :                 : --           
+VCC                          : AR48      : power  :                   : VID     :           :                 : --           
+VCC                          : AR50      : power  :                   : VID     :           :                 : --           
+GND                          : AR53      : gnd    :                   :         :           :                 : --           
+VCCRCORE                     : AR56      : power  :                   : 1.2V    :           :                 : --           
+GND                          : AR58      : gnd    :                   :         :           :                 : --           
+VCCEHT_GTSL1B                : AR61      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AR64      : gnd    :                   :         :           :                 : --           
+GND                          : AR66      :        :                   :         : 1C        :                 : 74ps         
+GND                          : AR69      :        :                   :         : 1C        :                 : 73ps         
+GND                          : AR72      : gnd    :                   :         :           :                 : --           
+GND                          : AR75      : gnd    :                   :         :           :                 : --           
+GND                          : AR77      : gnd    :                   :         :           :                 : --           
+GND                          : AR79      :        :                   :         : 1B        :                 : 43ps         
+GND                          : AR81      :        :                   :         : 1B        :                 : 43ps         
+GND                          : AT1       :        :                   :         : 4C        :                 : 54ps         
+GND                          : AT3       :        :                   :         : 4C        :                 : 54ps         
+GND                          : AT6       : gnd    :                   :         :           :                 : --           
+GND                          : AT9       : gnd    :                   :         :           :                 : --           
+GND                          : AT13      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AT17      :        :                   :         : 4C        :                 : 64ps         
+GXB_NC                       : AT19      :        :                   :         : 4C        :                 : 61ps         
+VCCEHT_GTSR4C                : AT22      : power  :                   : 1.8V    :           :                 : --           
+VCCEHT_GTSR4C                : AT25      : power  :                   : 1.8V    :           :                 : --           
+VCC_HSSI_R4                  : AT27      : power  :                   : 0.8V    :           :                 : --           
+NC                           : AT30      :        :                   :         :           :                 : --           
+GND                          : AT33      : gnd    :                   :         :           :                 : --           
+VCC                          : AT35      : power  :                   : VID     :           :                 : --           
+VCC                          : AT39      : power  :                   : VID     :           :                 : --           
+GNDSENSE                     : AT41      :        :                   :         :           :                 : --           
+VCCLSENSE                    : AT45      :        :                   :         :           :                 : --           
+VCC                          : AT48      : power  :                   : VID     :           :                 : --           
+GND                          : AT50      : gnd    :                   :         :           :                 : --           
+VCC                          : AT53      : power  :                   : VID     :           :                 : --           
+VCCRCORE                     : AT56      : power  :                   : 1.2V    :           :                 : --           
+VCC_HSSI_L1                  : AT58      : power  :                   : 0.8V    :           :                 : --           
+GND                          : AT61      : gnd    :                   :         :           :                 : --           
+VCCEHT_GTSL1B                : AT64      : power  :                   : 1.8V    :           :                 : --           
+GND                          : AT66      : gnd    :                   :         :           :                 : --           
+GND                          : AT69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AT72      :        :                   :         : 1B        :                 : 33ps         
+GXB_NC                       : AT75      :        :                   :         : 1B        :                 : 33ps         
+GND                          : AT77      : gnd    :                   :         :           :                 : --           
+GND                          : AT79      : gnd    :                   :         :           :                 : --           
+GND                          : AT81      : gnd    :                   :         :           :                 : --           
+GND                          : AU1       : gnd    :                   :         :           :                 : --           
+GND                          : AU3       : gnd    :                   :         :           :                 : --           
+GND                          : AU6       : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AU9       :        :                   :         : 4C        :                 : 55ps         
+GXB_NC                       : AU13      :        :                   :         : 4C        :                 : 55ps         
+GND                          : AU17      : gnd    :                   :         :           :                 : --           
+GND                          : AU19      : gnd    :                   :         :           :                 : --           
+VCCERT_GTSR4C                : AU22      : power  :                   : 1.0V    :           :                 : --           
+DNU                          : AU25      :        :                   :         :           :                 : --           
+VCC_HSSI_R4                  : AU27      : power  :                   : 0.8V    :           :                 : --           
+GND                          : AU30      : gnd    :                   :         :           :                 : --           
+VCC                          : AU33      : power  :                   : VID     :           :                 : --           
+VCC                          : AU35      : power  :                   : VID     :           :                 : --           
+GND                          : AU39      : gnd    :                   :         :           :                 : --           
+VCC                          : AU41      : power  :                   : VID     :           :                 : --           
+VCC                          : AU45      : power  :                   : VID     :           :                 : --           
+GND                          : AU48      : gnd    :                   :         :           :                 : --           
+VCC                          : AU50      : power  :                   : VID     :           :                 : --           
+VCC                          : AU53      : power  :                   : VID     :           :                 : --           
+GND                          : AU56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AU58      : power  :                   : 0.8V    :           :                 : --           
+VCCERT_GTSL1B                : AU61      : power  :                   : 1.0V    :           :                 : --           
+GND                          : AU64      : gnd    :                   :         :           :                 : --           
+GND                          : AU66      :        :                   :         : 1C        :                 : 59ps         
+GND                          : AU69      :        :                   :         : 1C        :                 : 60ps         
+GND                          : AU72      : gnd    :                   :         :           :                 : --           
+GND                          : AU75      : gnd    :                   :         :           :                 : --           
+GND                          : AU77      : gnd    :                   :         :           :                 : --           
+GND                          : AU79      :        :                   :         : 1B        :                 : 45ps         
+GND                          : AU81      :        :                   :         : 1B        :                 : 45ps         
+GND                          : AV1       :        :                   :         : 4C        :                 : 64ps         
+GND                          : AV3       :        :                   :         : 4C        :                 : 64ps         
+GND                          : AV6       : gnd    :                   :         :           :                 : --           
+GND                          : AV9       : gnd    :                   :         :           :                 : --           
+GND                          : AV13      : gnd    :                   :         :           :                 : --           
+GND                          : AV17      :        :                   :         : 4C        :                 : 73ps         
+GND                          : AV19      :        :                   :         : 4C        :                 : 71ps         
+VCCERT_GTSR4C                : AV22      : power  :                   : 1.0V    :           :                 : --           
+GND                          : AV25      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_R4                  : AV27      : power  :                   : 0.8V    :           :                 : --           
+VCC                          : AV30      : power  :                   : VID     :           :                 : --           
+VCC                          : AV33      : power  :                   : VID     :           :                 : --           
+GND                          : AV35      : gnd    :                   :         :           :                 : --           
+VCC                          : AV39      : power  :                   : VID     :           :                 : --           
+VCC                          : AV41      : power  :                   : VID     :           :                 : --           
+GND                          : AV45      : gnd    :                   :         :           :                 : --           
+VCC                          : AV48      : power  :                   : VID     :           :                 : --           
+VCC                          : AV50      : power  :                   : VID     :           :                 : --           
+GND                          : AV53      : gnd    :                   :         :           :                 : --           
+VCCRCORE                     : AV56      : power  :                   : 1.2V    :           :                 : --           
+VCC_HSSI_L1                  : AV58      : power  :                   : 0.8V    :           :                 : --           
+VCCERT_GTSL1B                : AV61      : power  :                   : 1.0V    :           :                 : --           
+VCCERT_GTSL1B                : AV64      : power  :                   : 1.0V    :           :                 : --           
+GND                          : AV66      : gnd    :                   :         :           :                 : --           
+GND                          : AV69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AV72      :        :                   :         : 1B        :                 : 39ps         
+GXB_NC                       : AV75      :        :                   :         : 1B        :                 : 39ps         
+GND                          : AV77      : gnd    :                   :         :           :                 : --           
+GND                          : AV79      : gnd    :                   :         :           :                 : --           
+GND                          : AV81      : gnd    :                   :         :           :                 : --           
+GND                          : AW1       : gnd    :                   :         :           :                 : --           
+GND                          : AW3       : gnd    :                   :         :           :                 : --           
+GND                          : AW6       : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AW9       :        :                   :         : 4C        :                 : 53ps         
+GXB_NC                       : AW13      :        :                   :         : 4C        :                 : 53ps         
+GND                          : AW17      : gnd    :                   :         :           :                 : --           
+GND                          : AW19      : gnd    :                   :         :           :                 : --           
+VCCERT_GTSR4C                : AW22      : power  :                   : 1.0V    :           :                 : --           
+GND                          : AW25      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_R4                  : AW27      : power  :                   : 0.8V    :           :                 : --           
+VCC                          : AW30      : power  :                   : VID     :           :                 : --           
+GND                          : AW33      : gnd    :                   :         :           :                 : --           
+VCC                          : AW35      : power  :                   : VID     :           :                 : --           
+VCC                          : AW39      : power  :                   : VID     :           :                 : --           
+GND                          : AW41      : gnd    :                   :         :           :                 : --           
+VCC                          : AW45      : power  :                   : VID     :           :                 : --           
+VCC                          : AW48      : power  :                   : VID     :           :                 : --           
+GND                          : AW50      : gnd    :                   :         :           :                 : --           
+VCC                          : AW53      : power  :                   : VID     :           :                 : --           
+GND                          : AW56      : gnd    :                   :         :           :                 : --           
+VCC_HSSI_L1                  : AW58      : power  :                   : 0.8V    :           :                 : --           
+GND                          : AW61      : gnd    :                   :         :           :                 : --           
+GND                          : AW64      : gnd    :                   :         :           :                 : --           
+GND                          : AW66      :        :                   :         : 1B        :                 : 53ps         
+GND                          : AW69      :        :                   :         : 1B        :                 : 51ps         
+GND                          : AW72      : gnd    :                   :         :           :                 : --           
+GND                          : AW75      : gnd    :                   :         :           :                 : --           
+GND                          : AW77      : gnd    :                   :         :           :                 : --           
+GND                          : AW79      :        :                   :         : 1B        :                 : 47ps         
+GND                          : AW81      :        :                   :         : 1B        :                 : 47ps         
+GND                          : AY1       :        :                   :         : 4C        :                 : 69ps         
+GND                          : AY3       :        :                   :         : 4C        :                 : 69ps         
+GND                          : AY6       : gnd    :                   :         :           :                 : --           
+GND                          : AY9       : gnd    :                   :         :           :                 : --           
+GND                          : AY13      : gnd    :                   :         :           :                 : --           
+GND                          : AY17      :        :                   :         : 4C        :                 : 56ps         
+GND                          : AY19      :        :                   :         : 4C        :                 : 57ps         
+GND                          : AY22      : gnd    :                   :         :           :                 : --           
+APROBE_GTSR4C_CH3            : AY25      :        :                   :         :           :                 : --           
+GND                          : AY27      : gnd    :                   :         :           :                 : --           
+GND                          : AY30      : gnd    :                   :         :           :                 : --           
+VCC                          : AY33      : power  :                   : VID     :           :                 : --           
+VCC                          : AY35      : power  :                   : VID     :           :                 : --           
+GND                          : AY39      : gnd    :                   :         :           :                 : --           
+VCC                          : AY41      : power  :                   : VID     :           :                 : --           
+VCC                          : AY45      : power  :                   : VID     :           :                 : --           
+GND                          : AY48      : gnd    :                   :         :           :                 : --           
+VCC                          : AY50      : power  :                   : VID     :           :                 : --           
+VCC                          : AY53      : power  :                   : VID     :           :                 : --           
+GND                          : AY56      : gnd    :                   :         :           :                 : --           
+GND                          : AY58      : gnd    :                   :         :           :                 : --           
+GND                          : AY61      : gnd    :                   :         :           :                 : --           
+GND                          : AY64      : gnd    :                   :         :           :                 : --           
+GND                          : AY66      : gnd    :                   :         :           :                 : --           
+GND                          : AY69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : AY72      :        :                   :         : 1B        :                 : 44ps         
+GXB_NC                       : AY75      :        :                   :         : 1B        :                 : 44ps         
+GND                          : AY77      : gnd    :                   :         :           :                 : --           
+GND                          : AY79      : gnd    :                   :         :           :                 : --           
+GND                          : AY81      : gnd    :                   :         :           :                 : --           
+GND                          : B2        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B4        :        :                   : 1.2V    : 3A_T      :                 : 122ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B8        :        :                   : 1.2V    : 3A_T      :                 : 123ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B12       :        :                   : 1.2V    : 3A_T      :                 : 124ps        
+GND                          : B16       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B18       :        :                   : 1.2V    : 3A_T      :                 : 127ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B20       :        :                   : 1.2V    : 3A_T      :                 : 105ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B23       :        :                   : 1.2V    : 3A_T      :                 : 108ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B25       :        :                   : 1.2V    : 3A_T      :                 : 117ps        
+GND                          : B26       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B29       :        :                   : 1.2V    : 3A_B      :                 : 81ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B32       :        :                   : 1.2V    : 3A_B      :                 : 78ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B34       :        :                   : 1.2V    : 3A_B      :                 : 78ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B37       :        :                   : 1.2V    : 3A_B      :                 : 72ps         
+GND                          : B40       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B42       :        :                   : 1.2V    : 3A_B      :                 : 71ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : B44       :        :                   : 1.2V    : 3A_B      :                 : 70ps         
+NC                           : B47       :        :                   :         :           :                 : --           
+NC                           : B49       :        :                   :         :           :                 : --           
+GND                          : B51       : gnd    :                   :         :           :                 : --           
+NC                           : B54       :        :                   :         :           :                 : --           
+NC                           : B57       :        :                   :         :           :                 : --           
+NC                           : B59       :        :                   :         :           :                 : --           
+NC                           : B61       :        :                   :         :           :                 : --           
+GND                          : B63       : gnd    :                   :         :           :                 : --           
+NC                           : B65       :        :                   :         :           :                 : --           
+NC                           : B68       :        :                   :         :           :                 : --           
+NC                           : B71       :        :                   :         :           :                 : --           
+NC                           : B73       :        :                   :         :           :                 : --           
+NC                           : B76       :        :                   :         :           :                 : --           
+NC                           : B78       :        :                   :         :           :                 : --           
+NC                           : B80       :        :                   :         :           :                 : --           
+GND                          : B81       : gnd    :                   :         :           :                 : --           
+GND                          : BA1       : gnd    :                   :         :           :                 : --           
+GND                          : BA3       : gnd    :                   :         :           :                 : --           
+GND                          : BA6       : gnd    :                   :         :           :                 : --           
+GXB_NC                       : BA9       :        :                   :         : 4C        :                 : 59ps         
+GXB_NC                       : BA13      :        :                   :         : 4C        :                 : 59ps         
+GND                          : BA17      : gnd    :                   :         :           :                 : --           
+GND                          : BA19      : gnd    :                   :         :           :                 : --           
+GND                          : BA22      : gnd    :                   :         :           :                 : --           
+RCOMP_GTSR4C_P               : BA25      :        :                   :         :           :                 : --           
+GND                          : BA27      : gnd    :                   :         :           :                 : --           
+VCCP                         : BA30      : power  :                   : VID     :           :                 : --           
+VCCP                         : BA33      : power  :                   : VID     :           :                 : --           
+GND                          : BA35      : gnd    :                   :         :           :                 : --           
+DNU                          : BA39      :        :                   :         :           :                 : --           
+VCCPT                        : BA41      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BA45      : gnd    :                   :         :           :                 : --           
+VCCPT                        : BA48      : power  :                   : 1.8V    :           :                 : --           
+VCCPT                        : BA50      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BA53      : gnd    :                   :         :           :                 : --           
+GND                          : BA56      : gnd    :                   :         :           :                 : --           
+RCOMP_GTSL1C_P               : BA58      :        :                   :         :           :                 : --           
+RCOMP_GTSL1C_N               : BA61      :        :                   :         :           :                 : --           
+GND                          : BA64      : gnd    :                   :         :           :                 : --           
+GND                          : BA66      :        :                   :         : 1B        :                 : 55ps         
+GND                          : BA69      :        :                   :         : 1B        :                 : 55ps         
+GND                          : BA72      : gnd    :                   :         :           :                 : --           
+GND                          : BA75      : gnd    :                   :         :           :                 : --           
+GND                          : BA77      : gnd    :                   :         :           :                 : --           
+GND                          : BA79      :        :                   :         : 1B        :                 : 50ps         
+GND                          : BA81      :        :                   :         : 1B        :                 : 50ps         
+GND                          : BB1       :        :                   :         : 4C        :                 : 74ps         
+GND                          : BB3       :        :                   :         : 4C        :                 : 74ps         
+GND                          : BB6       : gnd    :                   :         :           :                 : --           
+GND                          : BB9       : gnd    :                   :         :           :                 : --           
+GND                          : BB13      : gnd    :                   :         :           :                 : --           
+GND                          : BB17      : gnd    :                   :         :           :                 : --           
+APROBE_GTSR4C_CH2            : BB19      :        :                   :         :           :                 : --           
+APROBE2_GTSR4C               : BB22      :        :                   :         :           :                 : --           
+RCOMP_GTSR4C_N               : BB25      :        :                   :         :           :                 : --           
+GND                          : BB27      : gnd    :                   :         :           :                 : --           
+VCCPT_HVIO                   : BB30      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BB33      : gnd    :                   :         :           :                 : --           
+DNU                          : BB35      :        :                   :         :           :                 : --           
+VCCIO_PIO_SDM                : BB39      : power  :                   : 1.2V    :           :                 : --           
+GND                          : BB41      : gnd    :                   :         :           :                 : --           
+VCCL_SDM                     : BB45      : power  :                   : 0.8V    :           :                 : --           
+VCCL_SDM                     : BB48      : power  :                   : 0.8V    :           :                 : --           
+GND                          : BB50      : gnd    :                   :         :           :                 : --           
+VCCPLL_SDM                   : BB53      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BB56      : gnd    :                   :         :           :                 : --           
+GND                          : BB58      : gnd    :                   :         :           :                 : --           
+GND                          : BB61      : gnd    :                   :         :           :                 : --           
+GND                          : BB64      : gnd    :                   :         :           :                 : --           
+GND                          : BB66      : gnd    :                   :         :           :                 : --           
+GND                          : BB69      : gnd    :                   :         :           :                 : --           
+GXB_NC                       : BB72      :        :                   :         : 1B        :                 : 49ps         
+GXB_NC                       : BB75      :        :                   :         : 1B        :                 : 49ps         
+GND                          : BB77      : gnd    :                   :         :           :                 : --           
+GND                          : BB79      : gnd    :                   :         :           :                 : --           
+GND                          : BB81      : gnd    :                   :         :           :                 : --           
+GND                          : BC1       : gnd    :                   :         :           :                 : --           
+GND                          : BC3       : gnd    :                   :         :           :                 : --           
+GND                          : BC6       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BC9       :        :                   : 3.3V    : 6A        :                 : 51ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BC13      :        :                   : 3.3V    : 6A        :                 : 47ps         
+GND                          : BC17      : gnd    :                   :         :           :                 : --           
+GND                          : BC19      : gnd    :                   :         :           :                 : --           
+GND                          : BC22      : gnd    :                   :         :           :                 : --           
+GND                          : BC25      : gnd    :                   :         :           :                 : --           
+GND                          : BC27      : gnd    :                   :         :           :                 : --           
+VCCPT_HVIO                   : BC30      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BC33      : gnd    :                   :         :           :                 : --           
+VCCL_ADC_SDM                 : BC35      : power  :                   : VID     :           :                 : --           
+GND                          : BC39      : gnd    :                   :         :           :                 : --           
+VCCL_SDM                     : BC41      : power  :                   : 0.8V    :           :                 : --           
+VCCL_SDM                     : BC45      : power  :                   : 0.8V    :           :                 : --           
+GND                          : BC48      : gnd    :                   :         :           :                 : --           
+VCCPLLDIG_SDM                : BC50      : power  :                   : 0.8V    :           :                 : --           
+VCCADC                       : BC53      : power  :                   : 1.8V    :           :                 : --           
+VCCH_SDM                     : BC56      : power  :                   : 1.0V    :           :                 : --           
+VCCPT_HVIO                   : BC58      : power  :                   : 1.8V    :           :                 : --           
+VCCPT_HVIO                   : BC61      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BC64      : gnd    :                   :         :           :                 : --           
+DNU                          : BC66      :        :                   :         :           :                 : --           
+GND                          : BC69      : gnd    :                   :         :           :                 : --           
+GND                          : BC72      : gnd    :                   :         :           :                 : --           
+GND                          : BC75      : gnd    :                   :         :           :                 : --           
+GND                          : BC77      : gnd    :                   :         :           :                 : --           
+GND                          : BD80      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BD81      :        :                   : 3.3V    : 5A        :                 : 64ps         
+DNU                          : BE19      :        :                   :         :           :                 : --           
+DNU                          : BE22      :        :                   :         :           :                 : --           
+VCCIO_HVIO_6B                : BE25      : power  :                   : 3.3V    : 6B        :                 : --           
+VCCIO_HVIO_6B                : BE27      : power  :                   : 3.3V    : 6B        :                 : --           
+VCCIO_HVIO_6A                : BE30      : power  :                   : 3.3V    : 6A        :                 : --           
+GND                          : BE33      : gnd    :                   :         :           :                 : --           
+GND                          : BE35      : gnd    :                   :         :           :                 : --           
+VCCIO_SDM                    : BE39      : power  :                   : 1.8V    :           :                 : --           
+VCC_IO_SDM                   : BE41      : power  :                   : VID     :           :                 : --           
+GND                          : BE45      : gnd    :                   :         :           :                 : --           
+VCCBAT                       : BE48      : power  :                   : 1.8V    :           :                 : --           
+VCCFUSEWR_SDM                : BE50      : power  :                   : 1.8V    :           :                 : --           
+GND                          : BE53      : gnd    :                   :         :           :                 : --           
+VCCIO_HVIO_5B                : BE56      : power  :                   : 3.3V    : 5B        :                 : --           
+VCCIO_HVIO_5B                : BE58      : power  :                   : 3.3V    : 5B        :                 : --           
+GND                          : BE61      : gnd    :                   :         :           :                 : --           
+DNU                          : BE64      :        :                   :         :           :                 : --           
+DNU                          : BE66      :        :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BE69      :        :                   : 3.3V    : 5A        :                 : 37ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BF4       :        :                   : 3.3V    : 6A        :                 : 60ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BF11      :        :                   : 3.3V    : 6A        :                 : 50ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BF15      :        :                   : 3.3V    : 6A        :                 : 46ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BF74      :        :                   : 3.3V    : 5A        :                 : 49ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BF78      :        :                   : 3.3V    : 5A        :                 : 54ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BG1       :        :                   : 3.3V    : 6B        :                 : 67ps         
+GND                          : BG2       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BG80      :        :                   : 3.3V    : 5A        :                 : 62ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BG81      :        :                   : 3.3V    : 5A        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BH4       :        :                   : 3.3V    : 6A        :                 : 60ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BH11      :        :                   : 3.3V    : 6A        :                 : 48ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BH15      :        :                   : 3.3V    : 6A        :                 : 45ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BH74      :        :                   : 3.3V    : 5A        :                 : 54ps         
+GND                          : BH78      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BJ19      :        :                   : 3.3V    : 6A        :                 : 63ps         
+DNU                          : BJ22      :        :                   :         :           :                 : --           
+GND                          : BJ25      : gnd    :                   :         :           :                 : --           
+VCCIO_HVIO_6A                : BJ27      : power  :                   : 3.3V    : 6A        :                 : --           
+~ALTERA_AS_nCSO0,ALTERA_MSEL0~ : BJ30      : output, input : 1.8-V             :         : SDM       : N               : 71ps         
+SDM_IO12                     : BJ33      :        :                   :         : SDM       :                 : 69ps         
+GND                          : BJ35      : gnd    :                   :         :           :                 : --           
+~ALTERA_AS_nCSO3~            : BJ39      : output : 1.8-V             :         : SDM       : N               : 50ps         
+~ALTERA_AS_nRST~             : BJ41      : output : 1.8-V             :         : SDM       : N               : 55ps         
+SDM_IO13                     : BJ45      :        :                   :         : SDM       :                 : 41ps         
+OSC_CLK_1                    : BJ48      :        :                   :         : SDM       :                 : 43ps         
+GND                          : BJ50      : gnd    :                   :         :           :                 : --           
+TDI                          : BJ53      : input  :                   :         : SDM       :                 : 42ps         
+TMS                          : BJ56      : input  :                   :         : SDM       :                 : 44ps         
+TCK                          : BJ58      : input  :                   :         : SDM       :                 : 72ps         
+VCCIO_HVIO_5A                : BJ61      : power  :                   : 3.3V    : 5A        :                 : --           
+VCCIO_HVIO_5A                : BJ64      : power  :                   : 3.3V    : 5A        :                 : --           
+GND                          : BJ66      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BJ69      :        :                   : 3.3V    : 5A        :                 : 44ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BK1       :        :                   : 3.3V    : 6B        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BK2       :        :                   : 3.3V    : 6B        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BK80      :        :                   : 3.3V    : 5A        :                 : 61ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BK81      :        :                   : 3.3V    : 5A        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BL4       :        :                   : 3.3V    : 6A        :                 : 65ps         
+GND                          : BL11      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BL15      :        :                   : 3.3V    : 6A        :                 : 50ps         
+GND                          : BL74      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BL78      :        :                   : 3.3V    : 5A        :                 : 61ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BM1       :        :                   : 3.3V    : 6B        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BM2       :        :                   : 3.3V    : 6B        :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BM80      :        :                   : 3.3V    : 5A        :                 : 65ps         
+GND                          : BM81      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN4       :        :                   : 3.3V    : 6A        :                 : 72ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN11      :        :                   : 3.3V    : 6A        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN15      :        :                   : 3.3V    : 6A        :                 : 57ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN21      :        :                   : 3.3V    : 6A        :                 : 57ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN24      :        :                   : 3.3V    : 6A        :                 : 53ps         
+SDM_IO10                     : BN28      :        :                   :         : SDM       :                 : 78ps         
+~ALTERA_AS_nCSO2,ALTERA_MSEL1~ : BN31      : output, input : 1.8-V             :         : SDM       : N               : 69ps         
+SDM_IO11                     : BN36      :        :                   :         : SDM       :                 : 57ps         
+~ALTERA_AS_DATA3~            : BN38      : bidir  : 1.8-V             :         : SDM       : N               : 56ps         
+~ALTERA_AS_DATA0~            : BN43      : bidir  : 1.8-V             :         : SDM       : N               : 50ps         
+SDM_IO16                     : BN46      :        :                   :         : SDM       :                 : 43ps         
+TEMPDIODE0Ap                 : BN52      :        :                   :         : SDM       :                 : 39ps         
+TDO                          : BN55      : output :                   :         : SDM       :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN60      :        :                   : 3.3V    : 5B        :                 : 61ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN62      :        :                   : 3.3V    : 5B        :                 : 62ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN67      :        :                   : 3.3V    : 5B        :                 : 59ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN70      :        :                   : 3.3V    : 5B        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN74      :        :                   : 3.3V    : 5A        :                 : 60ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BN78      :        :                   : 3.3V    : 5A        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BP1       :        :                   : 3.3V    : 6B        :                 : 74ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BP2       :        :                   : 3.3V    : 6B        :                 : 72ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BP80      :        :                   : 3.3V    : 5A        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BP81      :        :                   : 3.3V    : 5A        :                 : 72ps         
+GND                          : BR4       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR11      :        :                   : 3.3V    : 6A        :                 : 71ps         
+GND                          : BR15      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR21      :        :                   : 3.3V    : 6A        :                 : 60ps         
+GND                          : BR24      : gnd    :                   :         :           :                 : --           
+SDM_IO14                     : BR28      :        :                   :         : SDM       :                 : 78ps         
+GND                          : BR31      : gnd    :                   :         :           :                 : --           
+~ALTERA_AS_DATA2~            : BR36      : bidir  : 1.8-V             :         : SDM       : N               : 60ps         
+GND                          : BR38      : gnd    :                   :         :           :                 : --           
+DNU                          : BR43      :        :                   :         :           :                 : --           
+GND                          : BR46      : gnd    :                   :         :           :                 : --           
+TEMPDIODE0An                 : BR52      :        :                   :         : SDM       :                 : 39ps         
+GND                          : BR55      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR60      :        :                   : 3.3V    : 5B        :                 : 62ps         
+GND                          : BR62      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR67      :        :                   : 3.3V    : 5B        :                 : 60ps         
+GND                          : BR70      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR74      :        :                   : 3.3V    : 5A        :                 : 59ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BR78      :        :                   : 3.3V    : 5A        :                 : 61ps         
+GND                          : BT1       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BT2       :        :                   : 3.3V    : 6B        :                 : 82ps         
+GND                          : BT80      : gnd    :                   :         :           :                 : --           
+GND                          : BT81      : gnd    :                   :         :           :                 : --           
+GND                          : BU1       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU2       :        :                   : 3.3V    : 6B        :                 : 82ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU4       :        :                   : 3.3V    : 6B        :                 : 72ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU8       :        :                   : 3.3V    : 6B        :                 : 71ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU12      :        :                   : 3.3V    : 6B        :                 : 68ps         
+GND                          : BU16      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU18      :        :                   : 3.3V    : 6B        :                 : 62ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU20      :        :                   : 3.3V    : 6B        :                 : 57ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU23      :        :                   : 3.3V    : 6B        :                 : 60ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU25      :        :                   : 3.3V    : 6A        :                 : 67ps         
+GND                          : BU26      : gnd    :                   :         :           :                 : --           
+~ALTERA_AS_nCSO1,ALTERA_MSEL2~ : BU29      : output, input : 1.8-V             :         : SDM       : N               : 77ps         
+nCONFIG                      : BU32      :        :                   :         : SDM       :                 : 73ps         
+SDM_IO0                      : BU34      :        :                   :         : SDM       :                 : 71ps         
+DNU                          : BU37      :        :                   :         :           :                 : --           
+GND                          : BU40      : gnd    :                   :         :           :                 : --           
+VREFP_ADC                    : BU42      :        :                   :         : SDM       :                 : 69ps         
+VREFN_ADC                    : BU44      :        :                   :         : SDM       :                 : 71ps         
+VSIGP_0                      : BU47      :        :                   :         : SDM       :                 : 78ps         
+GND                          : BU49      : gnd    :                   :         :           :                 : --           
+GND                          : BU51      : gnd    :                   :         :           :                 : --           
+DNU                          : BU54      :        :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU57      :        :                   : 3.3V    : 5B        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU59      :        :                   : 3.3V    : 5B        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU61      :        :                   : 3.3V    : 5B        :                 : 69ps         
+GND                          : BU63      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU65      :        :                   : 3.3V    : 5B        :                 : 73ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU68      :        :                   : 3.3V    : 5B        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU71      :        :                   : 3.3V    : 5B        :                 : 72ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU73      :        :                   : 3.3V    : 5B        :                 : 77ps         
+GND                          : BU76      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU78      :        :                   : 3.3V    : 5A        :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BU80      :        :                   : 3.3V    : 5A        :                 : 67ps         
+GND                          : BU81      : gnd    :                   :         :           :                 : --           
+GND                          : BV2       : gnd    :                   :         :           :                 : --           
+GND                          : BV4       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV8       :        :                   : 3.3V    : 6B        :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV12      :        :                   : 3.3V    : 6B        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV16      :        :                   : 3.3V    : 6B        :                 : 63ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV18      :        :                   : 3.3V    : 6B        :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV20      :        :                   : 3.3V    : 6B        :                 : 61ps         
+GND                          : BV23      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV25      :        :                   : 3.3V    : 6A        :                 : 67ps         
+~ALTERA_AS_CLK~              : BV26      : output : 1.8-V             :         : SDM       : N               : 84ps         
+~ALTERA_AS_DATA1~            : BV29      : bidir  : 1.8-V             :         : SDM       : N               : 81ps         
+nSTATUS                      : BV32      :        :                   :         : SDM       :                 : 77ps         
+GND                          : BV34      : gnd    :                   :         :           :                 : --           
+DNU                          : BV37      :        :                   :         :           :                 : --           
+VSIGN_1                      : BV40      :        :                   :         : SDM       :                 : 76ps         
+VSIGP_1                      : BV42      :        :                   :         : SDM       :                 : 73ps         
+GND                          : BV44      : gnd    :                   :         :           :                 : --           
+VSIGN_0                      : BV47      :        :                   :         : SDM       :                 : 80ps         
+GND                          : BV49      : gnd    :                   :         :           :                 : --           
+RREF_SDM                     : BV51      :        :                   :         : SDM       :                 : 69ps         
+GND                          : BV54      : gnd    :                   :         :           :                 : --           
+GND                          : BV57      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV59      :        :                   : 3.3V    : 5B        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV61      :        :                   : 3.3V    : 5B        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV63      :        :                   : 3.3V    : 5B        :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV65      :        :                   : 3.3V    : 5B        :                 : 77ps         
+GND                          : BV68      : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV71      :        :                   : 3.3V    : 5B        :                 : 77ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV73      :        :                   : 3.3V    : 5B        :                 : 82ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : BV76      :        :                   : 3.3V    : 5B        :                 : 82ps         
+GND                          : BV78      : gnd    :                   :         :           :                 : --           
+GND                          : BV80      : gnd    :                   :         :           :                 : --           
+GND                          : C1        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : C2        :        :                   : 1.2V    : 3A_T      :                 : 107ps        
+NC                           : C80       :        :                   :         :           :                 : --           
+GND                          : C81       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D4        :        :                   : 3.3V    : 6D        :                 : 86ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D11       :        :                   : 1.2V    : 3A_T      :                 : 108ps        
+GND                          : D15       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D21       :        :                   : 1.2V    : 3A_T      :                 : 92ps         
+GND                          : D24       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D28       :        :                   : 1.2V    : 3A_B      :                 : 75ps         
+GND                          : D31       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D36       :        :                   : 1.2V    : 3A_B      :                 : 68ps         
+GND                          : D38       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D43       :        :                   : 1.2V    : 3A_B      :                 : 70ps         
+GND                          : D46       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : D52       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+GND                          : D55       : gnd    :                   :         :           :                 : --           
+NC                           : D60       :        :                   :         :           :                 : --           
+GND                          : D62       : gnd    :                   :         :           :                 : --           
+NC                           : D67       :        :                   :         :           :                 : --           
+GND                          : D70       : gnd    :                   :         :           :                 : --           
+NC                           : D74       :        :                   :         :           :                 : --           
+GND                          : D78       : gnd    :                   :         :           :                 : --           
+GND                          : E1        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : E2        :        :                   : 1.2V    : 3A_T      :                 : 108ps        
+NC                           : E80       :        :                   :         :           :                 : --           
+NC                           : E81       :        :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F4        :        :                   : 3.3V    : 6D        :                 : 76ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F11       :        :                   : 1.2V    : 3A_T      :                 : 106ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F15       :        :                   : 1.2V    : 3A_T      :                 : 106ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F21       :        :                   : 1.2V    : 3A_T      :                 : 93ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F24       :        :                   : 1.2V    : 3A_T      :                 : 83ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F28       :        :                   : 1.2V    : 3A_B      :                 : 76ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F31       :        :                   : 1.2V    : 3A_B      :                 : 67ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F36       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F38       :        :                   : 1.2V    : 3A_B      :                 : 66ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F43       :        :                   : 1.2V    : 3A_B      :                 : 70ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F46       :        :                   : 1.2V    : 3A_B      :                 : 65ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F52       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : F55       :        :                   : 1.2V    : 3A_B      :                 : 68ps         
+NC                           : F60       :        :                   :         :           :                 : --           
+NC                           : F62       :        :                   :         :           :                 : --           
+NC                           : F67       :        :                   :         :           :                 : --           
+NC                           : F70       :        :                   :         :           :                 : --           
+NC                           : F74       :        :                   :         :           :                 : --           
+NC                           : F78       :        :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : G1        :        :                   : 1.2V    : 3A_T      :                 : 113ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : G2        :        :                   : 1.2V    : 3A_T      :                 : 113ps        
+NC                           : G80       :        :                   :         :           :                 : --           
+NC                           : G81       :        :                   :         :           :                 : --           
+GND                          : H4        : gnd    :                   :         :           :                 : --           
+GND                          : H11       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H15       :        :                   : 1.2V    : 3A_T      :                 : 105ps        
+GND                          : H21       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H24       :        :                   : 1.2V    : 3A_T      :                 : 81ps         
+GND                          : H28       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H31       :        :                   : 1.2V    : 3A_B      :                 : 67ps         
+GND                          : H36       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H38       :        :                   : 1.2V    : 3A_B      :                 : 65ps         
+GND                          : H43       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H46       :        :                   : 1.2V    : 3A_B      :                 : 65ps         
+GND                          : H52       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : H55       :        :                   : 1.2V    : 3A_B      :                 : 68ps         
+GND                          : H60       : gnd    :                   :         :           :                 : --           
+NC                           : H62       :        :                   :         :           :                 : --           
+GND                          : H67       : gnd    :                   :         :           :                 : --           
+NC                           : H70       :        :                   :         :           :                 : --           
+GND                          : H74       : gnd    :                   :         :           :                 : --           
+NC                           : H78       :        :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : J1        :        :                   : 1.2V    : 3A_T      :                 : 109ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : J2        :        :                   : 1.2V    : 3A_T      :                 : 109ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K4        :        :                   : 3.3V    : 6D        :                 : 64ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K11       :        :                   : 1.2V    : 3A_T      :                 : 102ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K15       :        :                   : 1.2V    : 3A_T      :                 : 102ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K21       :        :                   : 1.2V    : 3A_T      :                 : 78ps         
+clk                          : K24       : input  : 1.2-V             : 1.2V    : 3A_T      : N               : 77ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K28       :        :                   : 1.2V    : 3A_B      :                 : 83ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K31       :        :                   : 1.2V    : 3A_B      :                 : 83ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K36       :        :                   : 1.2V    : 3A_B      :                 : 81ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K38       :        :                   : 1.2V    : 3A_B      :                 : 81ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K43       :        :                   : 1.2V    : 3A_B      :                 : 75ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K46       :        :                   : 1.2V    : 3A_B      :                 : 75ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K52       :        :                   : 1.2V    : 3A_B      :                 : 64ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : K55       :        :                   : 1.2V    : 3A_B      :                 : 66ps         
+NC                           : K60       :        :                   :         :           :                 : --           
+NC                           : K62       :        :                   :         :           :                 : --           
+NC                           : K67       :        :                   :         :           :                 : --           
+NC                           : K70       :        :                   :         :           :                 : --           
+NC                           : K74       :        :                   :         :           :                 : --           
+GND                          : L77       : gnd    :                   :         :           :                 : --           
+GND                          : L79       : gnd    :                   :         :           :                 : --           
+GND                          : L81       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : M1        :        :                   : 1.2V    : 3A_T      :                 : 102ps        
+GND                          : M2        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : N1        :        :                   : 1.2V    : 3A_T      :                 : 100ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : N2        :        :                   : 1.2V    : 3A_T      :                 : 100ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P19       :        :                   : 3.3V    : 6C        :                 : 48ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P22       :        :                   : 1.2V    : 3A_T      :                 : 109ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P25       :        :                   : 1.2V    : 3A_T      :                 : 140ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P27       :        :                   : 1.2V    : 3A_T      :                 : 142ps        
+GND                          : P30       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P33       :        :                   : 1.2V    : 3A_T      :                 : 101ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P35       :        :                   : 1.2V    : 3A_T      :                 : 120ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P39       :        :                   : 1.2V    : 3A_T      :                 : 143ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P41       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+GND                          : P45       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P48       :        :                   : 1.2V    : 3A_B      :                 : 85ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P50       :        :                   : 1.2V    : 3A_B      :                 : 103ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P53       :        :                   : 1.2V    : 3A_B      :                 : 99ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P56       :        :                   : 1.2V    : 3A_B      :                 : 99ps         
+GND                          : P58       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : P61       :        :                   : 1.2V    : 3A_B      :                 : 90ps         
+NC                           : P64       :        :                   :         :           :                 : --           
+DNU                          : P66       :        :                   :         :           :                 : --           
+GND                          : P69       : gnd    :                   :         :           :                 : --           
+GND                          : P72       : gnd    :                   :         :           :                 : --           
+GND                          : P75       : gnd    :                   :         :           :                 : --           
+GND                          : P77       : gnd    :                   :         :           :                 : --           
+GND                          : P79       :        :                   :         : 1C        :                 : 55ps         
+GND                          : P81       :        :                   :         : 1C        :                 : 55ps         
+GND                          : R5        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : R7        :        :                   : 3.3V    : 6D        :                 : 53ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : R10       :        :                   : 3.3V    : 6D        :                 : 49ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : R14       :        :                   : 3.3V    : 6D        :                 : 46ps         
+GND                          : T1        : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : T2        :        :                   : 1.2V    : 3A_T      :                 : 99ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : U5        :        :                   : 3.3V    : 6D        :                 : 56ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : U7        :        :                   : 3.3V    : 6D        :                 : 50ps         
+GND                          : U10       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : U14       :        :                   : 3.3V    : 6D        :                 : 40ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V19       :        :                   : 3.3V    : 6C        :                 : 49ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V22       :        :                   : 1.2V    : 3A_T      :                 : 108ps        
+GND                          : V25       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V27       :        :                   : 1.2V    : 3A_T      :                 : 134ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V30       :        :                   : 1.2V    : 3A_T      :                 : 136ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V33       :        :                   : 1.2V    : 3A_T      :                 : 101ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V35       :        :                   : 1.2V    : 3A_T      :                 : 120ps        
+GND                          : V39       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V41       :        :                   : 1.2V    : 3A_T      :                 : 145ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V45       :        :                   : 1.2V    : 3A_B      :                 : 69ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V48       :        :                   : 1.2V    : 3A_B      :                 : 85ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V50       :        :                   : 1.2V    : 3A_B      :                 : 102ps        
+GND                          : V53       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V56       :        :                   : 1.2V    : 3A_B      :                 : 74ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V58       :        :                   : 1.2V    : 3A_B      :                 : 74ps         
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : V61       :        :                   : 1.2V    : 3A_B      :                 : 90ps         
+NC                           : V64       :        :                   :         :           :                 : --           
+DNU                          : V66       :        :                   :         :           :                 : --           
+GND                          : V69       : gnd    :                   :         :           :                 : --           
+GXB_NC                       : V72       :        :                   :         : 1C        :                 : 46ps         
+GXB_NC                       : V75       :        :                   :         : 1C        :                 : 46ps         
+GND                          : V77       : gnd    :                   :         :           :                 : --           
+GND                          : V79       : gnd    :                   :         :           :                 : --           
+GND                          : V81       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : W1        :        :                   : 1.2V    : 3A_T      :                 : 100ps        
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : W2        :        :                   : 1.2V    : 3A_T      :                 : 99ps         
+GND                          : Y19       : gnd    :                   :         :           :                 : --           
+RESERVED_INPUT_WITHOUT_WEAK_PULLUP : Y22       :        :                   : 3.3V    : 6C        :                 : 62ps         
+VCCIO_HVIO_6D                : Y25       : power  :                   : 3.3V    : 6D        :                 : --           
+GND                          : Y27       : gnd    :                   :         :           :                 : --           
+VCCIO_HVIO_6C                : Y30       : power  :                   : 3.3V    : 6C        :                 : --           
+GND                          : Y33       : gnd    :                   :         :           :                 : --           
+VCCIO_PIO_3A_T               : Y35       : power  :                   : 1.2V    : 3A_T      :                 : --           
+VCCIO_PIO_3A_B               : Y39       : power  :                   : 1.2V    : 3A_B      :                 : --           
+VCCIO_PIO_3A_B               : Y41       : power  :                   : 1.2V    : 3A_B      :                 : --           
+GND                          : Y45       : gnd    :                   :         :           :                 : --           
+GND                          : Y48       : gnd    :                   :         :           :                 : --           
+GND                          : Y50       : gnd    :                   :         :           :                 : --           
+GND                          : Y53       : gnd    :                   :         :           :                 : --           
+GND                          : Y56       : gnd    :                   :         :           :                 : --           
+GND                          : Y58       : gnd    :                   :         :           :                 : --           
+GND                          : Y61       : gnd    :                   :         :           :                 : --           
+GND                          : Y64       : gnd    :                   :         :           :                 : --           
+GND                          : Y66       : gnd    :                   :         :           :                 : --           
+GND                          : Y69       : gnd    :                   :         :           :                 : --           
+GND                          : Y72       : gnd    :                   :         :           :                 : --           
+GND                          : Y75       : gnd    :                   :         :           :                 : --           
+GND                          : Y77       : gnd    :                   :         :           :                 : --           
+GND                          : Y79       :        :                   :         : 1C        :                 : 51ps         
+GND                          : Y81       :        :                   :         : 1C        :                 : 51ps         

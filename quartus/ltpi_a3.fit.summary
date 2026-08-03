@@ -1,0 +1,20 @@
+Fitter Status : Successful - Sun Aug  2 22:56:30 2026
+Quartus Prime Version : 26.1.0 Build 110 03/26/2026 SC Pro Edition
+Revision Name : ltpi_a3
+Top-level Entity Name : ltpi_syn_top
+Family : Agilex 3
+Device : A3CW135BM16AE6S
+Timing Models : Final
+Power Models : Final
+Device Status : Final
+Logic utilization (in ALMs) : 1,217 / 45,800 ( 3 % )
+Total dedicated logic registers : 1113
+Total pins : 1 / 254 ( < 1 % )
+Total block memory bits : 0 / 7,229,440 ( 0 % )
+Total RAM Blocks : 0 / 353 ( 0 % )
+Total DSP Blocks : 0 / 368 ( 0 % )
+Total GTS Transceiver Channels : 0 / 4 ( 0 % )
+Total HSSI Ethernet Channels : 0 / 1 ( 0 % )
+Total HSSI PCIEs : 0 / 1 ( 0 % )
+Total HSSI HPS : 0 / 1 ( 0 % )
+Total PLLs : 0 / 11 ( 0 % )

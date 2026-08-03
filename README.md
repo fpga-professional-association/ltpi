@@ -72,6 +72,7 @@ sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, 13 checks
        render_waveform.py    VCD -> timing-diagram PNG
        cov_summary.py        Verilator coverage report
 uvm/   ltpi_if.sv, ltpi_uvm_pkg.sv, tb_uvm_top.sv, run_{questa,vcs,xcelium}
+quartus/ ltpi_syn_top.sv, build.tcl, ltpi_timing.sdc   Agilex timing closure
 docs/  USER_GUIDE.md         integration, CSR map, customization, debug
        TRACEABILITY.md       spec clause -> proof/sim mapping
 .github/workflows/verify.yml  CI: 13-suite formal matrix + system sim
@@ -169,6 +170,31 @@ compile-targeted at those tools rather than validated here.
   (1 ms window, spec Note 4) absorb the lock time.
 * 800 Mbps DDR needs Cyclone 10 GX-class LVDS or ECP5-5G/Avant with DELAYG
   tuning; 200/400 SDR close on mainstream devices of both vendors.
+
+## FPGA timing closure (Quartus Prime Pro 26.1)
+
+Fabric closure of the complete endpoint (`quartus/ltpi_syn_top.sv`:
+`ltpi_top` with NUM_I2C=2, NL=32, all channels + CSR + peer decode) at the
+**400 MHz link clock** - the top soft-PHY operating point (400 Mbps SDR /
+800 Mbps DDR). Fastest speed grades, signoff corners, maximum placement
+effort:
+
+| Device (fastest grade) | Part | Setup slack | Hold slack | Result |
+|---|---|---|---|---|
+| **Agilex 3** -6S | A3CW135BM16AE6S | +0.003 ns | +0.049 ns | **meets 400 MHz** |
+| **Agilex 5** -1V | A5EC065AB23AE1VR0 | +0.604 ns | +0.071 ns | **meets 400 MHz** |
+
+Reproduce: `cd quartus && quartus_sh -t build.tcl "Agilex 5"
+A5EC065AB23AE1VR0 ltpi_a5 && quartus_syn ... && quartus_fit ... &&
+quartus_sta ltpi_timing -c ltpi_a5 --mode=finalize`. Pin-level DDR budgets
+are owned by the vendor I/O layer (`rtl/vendor/`); this project measures
+register-to-register fabric closure with all data ports virtual.
+
+Timing-driven RTL refinements made for closure (all re-proven, 13 suites
+green, sim 13/13): registered counter clears + one-cycle-grace exit
+gating in the link FSM, pipelined highest-common speed computation,
+first-cycle-of-state speed-select latch with entry-cycle Link Detect
+guard, retimed I2C event-valid strobe.
 
 ## Coverage
 

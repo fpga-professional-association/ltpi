@@ -24,3 +24,19 @@ sim/mut.vvp
 *.vcd
 *.vvp
 !sim/ltpi_loopback_waveform.png
+
+# Quartus build artifacts (projects re-created by quartus/build.tcl)
+quartus/qdb/
+quartus/dni/
+quartus/tmp-clearbox/
+quartus/*.qdb
+quartus/*_summary.csv
+quartus/*.rpt
+quartus/*.txt
+quartus/*.qpf
+quartus/*.qsf
+quartus/*.done
+quartus/*.jdi
+quartus/*.sof
+quartus/*.qarlog
+quartus/quartus_*

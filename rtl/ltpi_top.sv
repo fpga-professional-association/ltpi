@@ -206,6 +206,15 @@ module ltpi_top #(
                            && link_up;
     assign op_frame_good = op_frame_any && frame_crc_ok;
 
+    // Retimed copy for the I2C relays: the frame-decode -> relay-FSM cone
+    // was an Agilex 3 critical path. The payload nibbles stay stable for a
+    // full frame time, so delaying only the valid strobe is safe.
+    logic op_frame_good_q;
+    always_ff @(posedge clk) begin
+        if (rst) op_frame_good_q <= 1'b0;
+        else     op_frame_good_q <= op_frame_good;
+    end
+
     // GPIO
     logic [7:0]  gpio_tx_counter;
     logic [15:0] gpio_tx_ll, gpio_tx_nl;
@@ -304,7 +313,7 @@ module ltpi_top #(
                 .bus_stop_gen(i2c_bus_stop_gen[gi]),
                 .tx_event(i2c_tx_event[gi]),
                 .rx_event(rx_payload[48 + 4*gi +: 4]),
-                .rx_event_valid(op_frame_good),
+                .rx_event_valid(op_frame_good_q),
                 .tx_sent_valid(i2c_ev_sent),
                 .tx_sent_event(i2c_sent_ev[gi]),
                 .state(), .initiator(), .start_deferred()
