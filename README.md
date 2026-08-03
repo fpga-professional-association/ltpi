@@ -13,14 +13,43 @@ UVM testbench for the **LVDS Tunneling Protocol & Interface (LTPI)**.
 > troubleshooting.
 
 Targets **both Altera/Intel and Lattice FPGAs** (vendor-portable RTL + thin
-I/O wrappers) at **200 MHz SDR (200 Mbps), 400 MHz SDR (400 Mbps), or
-400 MHz DDR (800 Mbps)** — the capability word `CAPS_DEFAULT` advertises all
-three and training negotiates the fastest common rate.
+I/O wrappers) across the **entire Table 21 speed ladder — 25 MHz SDR up to
+the 1 GHz DDR spec maximum (2 Gbps)**. See *Speed capabilities* below.
+
+## Speed capabilities
+
+Link training always negotiates the **highest rate both ends advertise**
+(proven: loopback L3/L4 — one-hot, mutually supported, 25 MHz mandatory
+fallback, DDR only if both ends are DDR-capable), so advertising more than
+the peer supports is always safe. Advertise only what your part's I/O
+closes — capability constants live in `rtl/ltpi_pkg.sv`:
+
+| Rate | Caps bit | SDR bitrate | DDR bitrate | Typical parts (full tables in `rtl/vendor/*.sdc/.lpf`) |
+|---|---|---|---|---|
+| 25 MHz | `CAP_25M_SDR` | 25 Mbps | 50 Mbps | any LVDS-capable device (spec-mandatory base) |
+| 50–150 MHz | `CAP_50M/75M/100M/150M_SDR` | 50–150 Mbps | 100–300 Mbps | any |
+| 200 MHz | `CAP_200M_SDR` | 200 Mbps | 400 Mbps | MAX10, Cyclone 10 LP/GX, MachXO3/XO5, ECP5, Agilex 3/5, Avant |
+| 250–300 MHz | `CAP_250M/300M_SDR` | 250–300 Mbps | 500–600 Mbps | Cyclone 10 GX, Arria 10, Agilex 3/5, ECP5 -8, Avant |
+| 400 MHz | `CAP_400M_SDR` | 400 Mbps | **800 Mbps** | Cyclone 10 GX, Arria 10, Agilex 3/5, ECP5 -8 (DELAYG-tuned), Avant |
+| 600 MHz | `CAP_600M_SDR` | 600 Mbps | 1.2 Gbps | LVDS SERDES parts: C10GX/Arria 10/Agilex; Avant; ECP5 X2-geared |
+| 800 MHz | `CAP_800M_SDR` | 800 Mbps | 1.6 Gbps | Arria 10 / Agilex LVDS SERDES; Avant |
+| 1 GHz | `CAP_1G_SDR` | 1 Gbps | **2 Gbps (spec max)** | Arria 10 / Agilex 5 LVDS SERDES; Avant |
+
+Presets: **`CAPS_DEFAULT`** = 25 M + 200 M SDR + 400 M SDR + DDR (lands on
+400 MHz DDR / 800 Mbps between two full-featured ends, graceful SDR
+fallback); **`CAPS_FULL`** = every rate + DDR (spec maximum). The
+soft `ltpi_phy_*` serializers + generic DDR I/O cells cover everything
+**through 400 MHz DDR**; above that the device's dedicated LVDS SERDES /
+geared I/O must replace them (open item, issue #2) — the byte-side
+interface is unchanged. The BMC can restrict the advertised set at runtime
+through CSR 0x04 (debug/recovery bisection). DDR mode additionally needs
+`ddr_mode` asserted and the PLL switched after training — see
+`docs/USER_GUIDE.md`.
 
 ## Layout
 
 ```
-rtl/   ltpi_pkg.sv           constants, enums, capability words
+rtl/   ltpi_pkg.sv           constants, enums, speed caps, platform IDs
        ltpi_crc8_func.svh    CRC-8 x^8+x^2+x+1 (shared include)
        ltpi_crc8.sv          streaming CRC generator/checker
        ltpi_frame_rx.sv      16-byte frame assembly + CRC + classify
@@ -28,15 +57,24 @@ rtl/   ltpi_pkg.sv           constants, enums, capability words
        ltpi_link_fsm.sv      link training/config/operational FSM (SCM+HPM)
        ltpi_gpio_channel.sv  LL GPIO (every frame) + NL GPIO (N-frame mux)
        ltpi_uart_channel.sv  UART 3x-oversample tunneling + RTS/CTS
-       ltpi_i2c_relay.sv     I2C/SMBus event relay w/ clock stretching
+       ltpi_i2c_relay.sv     bidirectional I2C/SMBus event relay (SPDM-ready)
+       ltpi_data_channel.sv  tag-tracked R/W data channel (AVMM/APB-style)
+       ltpi_csr.sv           Table 36 debug/status/control registers
+       ltpi_peer_decode.sv   peer vendor ID + Table 28 feature-row decode
        ltpi_phy.sv           SDR/DDR serdes, comma hunt, DDR bitslip
-       ltpi_top.sv           full endpoint: PHY+framer+FSM+channels
-       vendor/               ALTDDIO / ODDRX1F wrappers, SDC + LPF constraints
-formal/  *.sby               SymbiYosys proofs (see table below)
-         ltpi_loopback.sv    SCM+HPM composition proof
-sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, self-checking
+       ltpi_top.sv           full endpoint: PHY+framer+FSM+channels (NUM_I2C)
+       vendor/               ALTDDIO / ODDRX1F wrappers, per-speed SDC + LPF
+formal/  *.sby (13 suites)   SymbiYosys proofs (see table below)
+         ltpi_loopback.sv    SCM+HPM link composition proof
+         ltpi_i2c_loopback.sv  two-relay I2C composition proof
+         mutation_coverage.py  3-stage mutation study (+ mutation_report.txt)
+sim/   tb_ltpi_system.sv     two endpoints, serial cross-connect, 13 checks
        render_waveform.py    VCD -> timing-diagram PNG
+       cov_summary.py        Verilator coverage report
 uvm/   ltpi_if.sv, ltpi_uvm_pkg.sv, tb_uvm_top.sv, run_{questa,vcs,xcelium}
+docs/  USER_GUIDE.md         integration, CSR map, customization, debug
+       TRACEABILITY.md       spec clause -> proof/sim mapping
+.github/workflows/verify.yml  CI: 13-suite formal matrix + system sim
 ```
 
 ## Proof suites (all PASS)
@@ -53,6 +91,9 @@ uvm/   ltpi_if.sv, ltpi_uvm_pkg.sv, tb_uvm_top.sv, run_{questa,vcs,xcelium}
 | `ltpi_i2c_loopback` | bmc, prove, cover | **two-relay composition**: bus-mastership mutual exclusion proven unbounded (never two active initiators), responder-event lemmas; covers: **HPM-initiated transaction (the SPDM response path)**, defer-then-claim, simultaneous-start race resolved by priority |
 | `ltpi_phy` | {tx,rx} × {bmc, prove, cover} | serializer order/losslessness, RX byte = exact wire window, comma-first after alignment, DDR odd-offset bitslip, realign |
 | `ltpi_loopback` | bmc, prove, cover | **SCM↔HPM composition**: L1–L4 + T1–T3 — Accept implies Configure happened, HPM-Operational implies SCM-Operational, **speed agreement** (both sides always select the same one-hot mutually-supported speed, incl. the adopt-peer-select path), DDR only when both capable; covers: full bring-up, 400 MHz DDR negotiation, 200 MHz SDR fallback |
+| `ltpi_csr` | bmc, prove, cover | C1–C5: write-1-clear semantics, self-clearing control pulses, saturating counters, no cross-register side effects, status readback correctness |
+| `ltpi_data_channel` | bmc, prove, cover | D1–D5: single outstanding request, tag-matched responses only, no response without a serviced request, completer request-level discipline; covers: read/write/error round trips |
+| `ltpi_peer_decode` | bmc, prove, cover | PD1–PD3: capture only on CRC-good Advertise, ROM-consistent vendor decode, decode totality; covers: ASPEED peer, unknown-ID with valid feature row, full-featured peer |
 
 Run everything: activate `..\..\oss-cad-suite\environment.ps1`, then
 `sby -f <suite>.sby` in `formal/`.
