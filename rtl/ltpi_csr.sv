@@ -41,6 +41,19 @@ module ltpi_csr (
     input  logic        phy_aligned,
     input  logic [15:0] remote_caps,
 
+    // Peer identity + feature row (from ltpi_peer_decode; Tables 26/28)
+    input  logic [15:0] local_platform_id,
+    input  logic        peer_valid,
+    input  logic [15:0] peer_platform_id,
+    input  ltpi_pkg::peer_vendor_t peer_vendor,
+    input  logic        peer_caps_default,
+    input  logic [4:0]  peer_channels,   // {oem,data,uart,i2c,gpio}
+    input  logic [9:0]  peer_nl_cnt,
+    input  logic [5:0]  peer_i2c_en,
+    input  logic [5:0]  peer_i2c_speed,
+    input  logic [6:0]  peer_uart,       // {en[1:0], flow, baud[3:0]}
+    input  logic [15:0] peer_oem_caps,
+
     // Event pulses from the core
     input  logic ev_align_err,
     input  logic ev_link_lost,
@@ -188,6 +201,15 @@ module ltpi_csr (
                                  1'b0, err_flags[5:1], phy_aligned};
                 8'h04: rdata <= {8'd0, ctl_caps_override, 8'h10};
                 8'h08: rdata <= {8'd0, remote_caps, 8'h00};
+                // Platform IDs (Table 36 offsets 0x0C/0x10) + vendor decode
+                8'h0C: rdata <= {16'd0, local_platform_id};
+                8'h10: rdata <= {12'd0, peer_valid, peer_vendor,
+                                 peer_platform_id};
+                // Peer feature row (advertised Table 28 capabilities)
+                8'h1C: rdata <= {4'd0, peer_i2c_speed, peer_i2c_en,
+                                 peer_nl_cnt, peer_channels,
+                                 peer_caps_default};
+                8'h20: rdata <= {peer_oem_caps, 9'd0, peer_uart};
                 8'h2C: rdata <= cnt_align;
                 8'h30: rdata <= cnt_lost;
                 8'h34: rdata <= cnt_crc;

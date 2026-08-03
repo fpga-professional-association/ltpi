@@ -1,11 +1,37 @@
-# LTPI constraints - Lattice (Diamond .lpf), ECP5 example.
-# Pick ONE frequency block matching the negotiated operating point.
+# LTPI constraints - Lattice (Diamond .lpf / Radiant equivalents).
+# Pick ONE frequency line. Part guidance per speed:
+#
+#   OPERATING POINT      LINK CLK  BITRATE   PARTS THAT CLOSE IT
+#   -----------------    --------  -------   ---------------------------------
+#   25  MHz SDR (base)    25 MHz   25 Mbps   any (MachXO2/XO3, ECP5, Avant)
+#   200 MHz SDR          200 MHz   200 Mbps  MachXO3/XO5, ECP5, Avant -
+#                                            generic I/O registers
+#   400 MHz SDR          400 MHz   400 Mbps  ECP5 -8, Avant (MachXO3 does not
+#                                            close; XO5 marginal)
+#   400 MHz DDR          400 MHz   800 Mbps  ECP5 -8 with ODDRX1F/IDDRX1F +
+#                                            DELAYG tuning; Avant comfortable
+#   600 MHz DDR          600 MHz   1.2 Gbps  Avant GDDR I/O; ECP5 needs
+#                                            ODDRX2F gearing (x2) at 300 MHz
+#                                            SCLK - use the 7:1 LVDS gearbox
+#                                            style, not plain X1 registers
+#   1 GHz  DDR (spec max) 1 GHz    2 Gbps    Avant only (ECP5 generic LVDS
+#                                            tops out ~800 Mbps-1 Gbps with
+#                                            X2 gearing)
+#
+# Above 400 MHz DDR replace the soft ltpi_phy_* serializers with the
+# device's geared DDR primitives (ODDRX2F/IDDRX2F or Avant hard I/O).
 
 # --- 200 MHz SDR (200 Mbps) ---
 # FREQUENCY NET "ltpi_clk" 200.000000 MHz ;
 
-# --- 400 MHz SDR (400 Mbps) / 400 MHz DDR (800 Mbps, ECP5-5G/Avant) ---
+# --- 400 MHz SDR (400 Mbps) / 400 MHz DDR (800 Mbps) --- (default)
 FREQUENCY NET "ltpi_clk" 400.000000 MHz ;
+
+# --- 600 MHz DDR (1.2 Gbps, Avant / ECP5 X2-geared) ---
+# FREQUENCY NET "ltpi_clk" 600.000000 MHz ;
+
+# --- 1 GHz DDR (2 Gbps, spec maximum; Avant) ---
+# FREQUENCY NET "ltpi_clk" 1000.000000 MHz ;
 
 # LVDS input/output pairs (true LVDS on ECP5 left/right banks)
 IOBUF PORT "LTPI_RX_DAT" IO_TYPE=LVDS25 DIFFRESISTOR=100 ;
@@ -14,5 +40,4 @@ IOBUF PORT "LTPI_TX_DAT" IO_TYPE=LVDS25 ;
 IOBUF PORT "LTPI_TX_CLK" IO_TYPE=LVDS25 ;
 
 # Center the DDR capture window with DELAYG (see ltpi_lvds_io.sv); verify
-# with a post-route trace analysis at 400 MHz DDR - this operating point
-# needs the -8 speed grade or Avant.
+# with post-route trace analysis at 400 MHz DDR and above.

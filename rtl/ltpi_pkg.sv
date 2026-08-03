@@ -66,9 +66,18 @@ package ltpi_pkg;
 
     // Speed capability bits (spec Table 21): [7:0] = x1,x2,x3,x4,x6,x8,x10,x12
     // (25..300MHz), [11:8] = x16,x24,x32,x40 (400,600,800,1000MHz), [15] DDR.
-    localparam logic [15:0] CAP_25M_SDR  = 16'h0001;  // mandatory base
+    localparam logic [15:0] CAP_25M_SDR  = 16'h0001;  // x1  - mandatory base
+    localparam logic [15:0] CAP_50M_SDR  = 16'h0002;  // x2
+    localparam logic [15:0] CAP_75M_SDR  = 16'h0004;  // x3
+    localparam logic [15:0] CAP_100M_SDR = 16'h0008;  // x4
+    localparam logic [15:0] CAP_150M_SDR = 16'h0010;  // x6
     localparam logic [15:0] CAP_200M_SDR = 16'h0020;  // x8
+    localparam logic [15:0] CAP_250M_SDR = 16'h0040;  // x10
+    localparam logic [15:0] CAP_300M_SDR = 16'h0080;  // x12
     localparam logic [15:0] CAP_400M_SDR = 16'h0100;  // x16
+    localparam logic [15:0] CAP_600M_SDR = 16'h0200;  // x24
+    localparam logic [15:0] CAP_800M_SDR = 16'h0400;  // x32
+    localparam logic [15:0] CAP_1G_SDR   = 16'h0800;  // x40
     localparam logic [15:0] CAP_DDR      = 16'h8000;  // DDR-capable I/O
 
     // Project default: 25MHz base + 200MHz SDR + 400MHz SDR + DDR-capable,
@@ -76,6 +85,40 @@ package ltpi_pkg;
     // 200MHz/400MHz SDR against SDR-only implementations.
     localparam logic [15:0] CAPS_DEFAULT = CAP_25M_SDR | CAP_200M_SDR
                                          | CAP_400M_SDR | CAP_DDR;
+
+    // Every Table 21 rate + DDR: the spec maximum (1GHz DDR = 2Gbps).
+    // Negotiation always lands on the highest rate BOTH ends advertise, so
+    // advertising the full ladder is safe against any compliant peer; gate
+    // it by what your part's LVDS I/O actually closes (see rtl/vendor/).
+    localparam logic [15:0] CAPS_FULL = CAP_25M_SDR | CAP_50M_SDR
+                                      | CAP_75M_SDR | CAP_100M_SDR
+                                      | CAP_150M_SDR | CAP_200M_SDR
+                                      | CAP_250M_SDR | CAP_300M_SDR
+                                      | CAP_400M_SDR | CAP_600M_SDR
+                                      | CAP_800M_SDR | CAP_1G_SDR
+                                      | CAP_DDR;
+
+    // ---------------- peer identification (Advertise frame) ----------
+    // Platform Type (spec Table 26): a 16-bit OEM-DEFINED SCM/HPM ID in
+    // Advertise bytes 2-3. There is NO public registry - the IDs below are
+    // placeholders for the vendors commonly found on the far end of an
+    // LTPI link; align them with each partner (e.g. ASPEED's AST1700
+    // datasheet / platform agreement) before relying on the decode.
+    localparam logic [15:0] PLATID_UNKNOWN   = 16'h0000; // OCP ref default
+    localparam logic [15:0] PLATID_THIS_CORE = 16'hF9A0; // this IP (example)
+    localparam logic [15:0] PLATID_ASPEED    = 16'h1700; // AST1700-class BMC
+    localparam logic [15:0] PLATID_LATTICE   = 16'h1A77; // Lattice DC-SCM IP
+    localparam logic [15:0] PLATID_INTEL_REF = 16'h0CB0; // OCP/Intel ref impl
+    localparam logic [15:0] PLATID_MICROCHIP = 16'h4D43; // CoreLTPI ("MC")
+
+    typedef enum logic [2:0] {
+        VENDOR_UNKNOWN   = 3'd0,
+        VENDOR_THIS_CORE = 3'd1,
+        VENDOR_ASPEED    = 3'd2,
+        VENDOR_LATTICE   = 3'd3,
+        VENDOR_INTEL_REF = 3'd4,
+        VENDOR_MICROCHIP = 3'd5
+    } peer_vendor_t;
 
     // The CRC-8 update function lives in ltpi_crc8_func.svh, included inside
     // each module body: yosys cannot elaborate package function bodies that

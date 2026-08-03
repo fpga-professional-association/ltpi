@@ -1,8 +1,14 @@
 # Formally Verified LTPI Implementation (OCP DC-SCM 2.0)
 
 SystemVerilog implementation, machine-checked formal proofs, simulation, and
-UVM testbench for the **LVDS Tunneling Protocol & Interface (LTPI)** from the
-OCP DC-SCM 2.0 specification (`../spec/OCP_DC-SCM_2.0_LTPI_v1.0.pdf`).
+UVM testbench for the **LVDS Tunneling Protocol & Interface (LTPI)**.
+
+> **Verified to: OCP DC-SCM 2.2 LTPI, Version 1.0 (Revision 1.2, Aug 11
+> 2025)** - the latest public release, including all normative changes of
+> the 2.1v1.0 / 2.1v1.1 / 2.2v1.0 revision history. See
+> `docs/TRACEABILITY.md` for the clause-by-clause map and
+> `docs/USER_GUIDE.md` for integration, simulation, customization, and
+> troubleshooting.
 
 Targets **both Altera/Intel and Lattice FPGAs** (vendor-portable RTL + thin
 I/O wrappers) at **200 MHz SDR (200 Mbps), 400 MHz SDR (400 Mbps), or

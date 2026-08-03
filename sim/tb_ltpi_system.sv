@@ -31,6 +31,8 @@ module tb_ltpi_system;
     logic        scm_i2c_start = 0, scm_i2c_stop = 0;
     logic        scm_i2c_scl_rise = 0, scm_i2c_scl_fall = 0, scm_i2c_sda = 1;
     logic        scm_scl_stretch, scm_sda_pull;
+    logic [1:0]  scm_stretch_v, scm_pull_v, scm_sgen_v, scm_pgen_v;
+    logic [1:0]  hpm_stretch_v, hpm_pull_v, hpm_sgen_v, hpm_pgen_v;
 
     // HPM channel-side signals
     logic [15:0] hpm_ll_in = '0,  hpm_ll_out;
@@ -82,12 +84,13 @@ module tb_ltpi_system;
         .nl_gpio_in(scm_nl_in), .nl_gpio_out(scm_nl_out),
         .uart_txd_in(scm_uart_txd), .uart_flow_in(1'b1),
         .uart_txd_out(scm_uart_txd_out), .uart_flow_out(),
-        .i2c_start_det(scm_i2c_start), .i2c_stop_det(scm_i2c_stop),
-        .i2c_scl_rise(scm_i2c_scl_rise),
-        .i2c_scl_fall(scm_i2c_scl_fall | scm_i2c_scl_fall2),
-        .i2c_sda_val(scm_i2c_sda),
-        .i2c_scl_stretch(scm_scl_stretch), .i2c_sda_pull(scm_sda_pull),
-        .i2c_bus_start_gen(scm_start_gen), .i2c_bus_stop_gen(scm_stop_gen),
+        .i2c_start_det({1'b0, scm_i2c_start}),
+        .i2c_stop_det({1'b0, scm_i2c_stop}),
+        .i2c_scl_rise({1'b0, scm_i2c_scl_rise}),
+        .i2c_scl_fall({1'b0, scm_i2c_scl_fall | scm_i2c_scl_fall2}),
+        .i2c_sda_val({1'b1, scm_i2c_sda}),
+        .i2c_scl_stretch(scm_stretch_v), .i2c_sda_pull(scm_pull_v),
+        .i2c_bus_start_gen(scm_sgen_v), .i2c_bus_stop_gen(scm_pgen_v),
         .dc_req_valid(dc_req_v), .dc_req_write(dc_req_w),
         .dc_req_addr(dc_req_addr), .dc_req_wdata(dc_req_wdata),
         .dc_req_byteen(4'hF), .dc_req_ready(dc_req_ready),
@@ -117,11 +120,13 @@ module tb_ltpi_system;
         .nl_gpio_in(hpm_nl_in), .nl_gpio_out(hpm_nl_out),
         .uart_txd_in(hpm_uart_txd), .uart_flow_in(1'b1),
         .uart_txd_out(hpm_uart_txd_out), .uart_flow_out(),
-        .i2c_start_det(hpm_i2c_start), .i2c_stop_det(hpm_i2c_stop),
-        .i2c_scl_rise(hpm_i2c_scl_rise), .i2c_scl_fall(hpm_i2c_scl_fall),
-        .i2c_sda_val(hpm_i2c_sda),
-        .i2c_scl_stretch(hpm_scl_stretch), .i2c_sda_pull(hpm_sda_pull),
-        .i2c_bus_start_gen(hpm_start_gen), .i2c_bus_stop_gen(hpm_stop_gen),
+        .i2c_start_det({1'b0, hpm_i2c_start}),
+        .i2c_stop_det({1'b0, hpm_i2c_stop}),
+        .i2c_scl_rise({1'b0, hpm_i2c_scl_rise}),
+        .i2c_scl_fall({1'b0, hpm_i2c_scl_fall}),
+        .i2c_sda_val({1'b1, hpm_i2c_sda}),
+        .i2c_scl_stretch(hpm_stretch_v), .i2c_sda_pull(hpm_pull_v),
+        .i2c_bus_start_gen(hpm_sgen_v), .i2c_bus_stop_gen(hpm_pgen_v),
         .dc_req_valid(1'b0), .dc_req_write(1'b0),
         .dc_req_addr(32'h0), .dc_req_wdata(32'h0),
         .dc_req_byteen(4'h0), .dc_req_ready(),
@@ -136,6 +141,15 @@ module tb_ltpi_system;
         .speed_select(hpm_speed), .speed_valid(hpm_speed_v),
         .phy_aligned(hpm_aligned)
     );
+
+    assign scm_scl_stretch = scm_stretch_v[0];
+    assign scm_sda_pull    = scm_pull_v[0];
+    assign scm_start_gen   = scm_sgen_v[0];
+    assign scm_stop_gen    = scm_pgen_v[0];
+    assign hpm_scl_stretch = hpm_stretch_v[0];
+    assign hpm_sda_pull    = hpm_pull_v[0];
+    assign hpm_start_gen   = hpm_sgen_v[0];
+    assign hpm_stop_gen    = hpm_pgen_v[0];
 
     // HPM-side completer: a 16-word scratch memory with 1-cycle service.
     always @(posedge clk) begin
@@ -226,7 +240,7 @@ module tb_ltpi_system;
         wait (hpm_stop_gen);
         // HPM local bus completes the regenerated STOP.
         @(posedge clk); hpm_i2c_stop <= 1; @(posedge clk); hpm_i2c_stop <= 0;
-        wait (u_scm.u_i2c.state == 0 && u_hpm.u_i2c.state == 0);
+        wait (u_scm.g_i2c[0].u_i2c.state == 0 && u_hpm.g_i2c[0].u_i2c.state == 0);
         $display("[%0t] both relays idle after Stop", $time);
 
         // Now the HPM (SPDM responder acting as bus master) initiates.
@@ -258,7 +272,7 @@ module tb_ltpi_system;
             begin errors++; $display("FAIL: no stretch during data bit"); end
         else $display("PASS: HPM stretches while data bit crosses the link");
         // SCM regenerates the bit; it is a 1 so SDA must NOT be pulled.
-        wait (u_scm.u_i2c.state == 4);   // S_RDATA
+        wait (u_scm.g_i2c[0].u_i2c.state == 4);   // S_RDATA
         if (scm_sda_pull)
             begin errors++; $display("FAIL: SDA pulled for a 1-bit"); end
         else $display("PASS: open-drain - regenerated 1-bit not pulled");
@@ -269,9 +283,9 @@ module tb_ltpi_system;
                  $time);
         // Close the transaction: HPM issues STOP, SCM regenerates it.
         @(posedge clk); hpm_i2c_stop <= 1; @(posedge clk); hpm_i2c_stop <= 0;
-        wait (u_scm.u_i2c.bus_stop_gen);
+        wait (u_scm.g_i2c[0].u_i2c.bus_stop_gen);
         @(posedge clk); scm_i2c_stop <= 1; @(posedge clk); scm_i2c_stop <= 0;
-        wait (u_scm.u_i2c.state == 0 && u_hpm.u_i2c.state == 0);
+        wait (u_scm.g_i2c[0].u_i2c.state == 0 && u_hpm.g_i2c[0].u_i2c.state == 0);
         $display("[%0t] PASS: HPM transaction closed, both relays idle", $time);
 
         // ---- 8. Coordinated soft reset (Operational -> Advertise) ------
@@ -340,6 +354,18 @@ module tb_ltpi_system;
         else $display("[%0t] PASS: data channel read back = %h over LTPI",
                       $time, dc_rsp_rdata);
 
+        // ---- 12. Peer identity + feature row decode -----------------
+        if (!u_scm.peer_valid || u_scm.peer_platform_id !== 16'hF9A0
+            || !u_scm.pf_i2c || !u_scm.pf_data
+            || u_scm.pf_i2c_en !== 6'h03 || u_scm.pf_nl_cnt !== 10'd32)
+            begin errors++; $display("FAIL: peer decode id=%h i2c_en=%h nl=%0d",
+                u_scm.peer_platform_id, u_scm.pf_i2c_en, u_scm.pf_nl_cnt); end
+        else
+            $display("PASS: peer decoded - id=%h vendor=%0d chan[gpio,i2c,uart,data]=%b%b%b%b i2c_en=%b nl=%0d",
+                u_scm.peer_platform_id, u_scm.peer_vendor,
+                u_scm.pf_gpio, u_scm.pf_i2c, u_scm.pf_uart, u_scm.pf_data,
+                u_scm.pf_i2c_en, u_scm.pf_nl_cnt);
+
         repeat (500) @(posedge clk);
 
         if (errors == 0)
@@ -379,16 +405,17 @@ module tb_ltpi_system;
     end
     always @(posedge scm_aligned) $display("[%0t] SCM PHY aligned", $time);
     always @(posedge hpm_aligned) $display("[%0t] HPM PHY aligned", $time);
-    always @(u_scm.u_i2c.state)
+    always @(u_scm.g_i2c[0].u_i2c.state)
         $display("[%0t] SCM i2c state -> %0d tx_ev=%h init=%b", $time,
-                 u_scm.u_i2c.state, u_scm.u_i2c.tx_event, u_scm.u_i2c.initiator);
-    always @(u_hpm.u_i2c.state)
+                 u_scm.g_i2c[0].u_i2c.state, u_scm.g_i2c[0].u_i2c.tx_event, u_scm.g_i2c[0].u_i2c.initiator);
+    always @(u_hpm.g_i2c[0].u_i2c.state)
         $display("[%0t] HPM i2c state -> %0d tx_ev=%h init=%b def=%b", $time,
-                 u_hpm.u_i2c.state, u_hpm.u_i2c.tx_event,
-                 u_hpm.u_i2c.initiator, u_hpm.u_i2c.start_deferred);
+                 u_hpm.g_i2c[0].u_i2c.state, u_hpm.g_i2c[0].u_i2c.tx_event,
+                 u_hpm.g_i2c[0].u_i2c.initiator, u_hpm.g_i2c[0].u_i2c.start_deferred);
     always @(scm_state) $display("[%0t] SCM state -> %0d", $time, scm_state);
     always @(hpm_state) $display("[%0t] HPM state -> %0d", $time, hpm_state);
 `endif
 
 endmodule
+
 

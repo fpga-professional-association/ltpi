@@ -14,6 +14,8 @@ import ltpi_pkg::*;
 module ltpi_top #(
     parameter bit ROLE_SCM = 1'b1,
     parameter int unsigned NL_TOTAL = 32,
+    parameter int unsigned NUM_I2C  = 2,     // 1..6 relay channels
+    parameter logic [15:0] PLATFORM_ID = PLATID_THIS_CORE, // Table 26 (OEM)
     // Training thresholds (spec defaults; shrink for simulation)
     parameter int unsigned DETECT_MIN_TX    = 255,
     parameter int unsigned DETECT_MIN_RX    = 7,
@@ -53,11 +55,18 @@ module ltpi_top #(
     output logic uart_txd_out,
     output logic uart_flow_out,
 
-    // I2C channel 0 relay bus-side interface
-    input  logic i2c_start_det, i2c_stop_det, i2c_scl_rise, i2c_scl_fall,
-    input  logic i2c_sda_val,
-    output logic i2c_scl_stretch, i2c_sda_pull,
-    output logic i2c_bus_start_gen, i2c_bus_stop_gen,
+    // I2C/SMBus relay bus-side interfaces, NUM_I2C channels (1..6).
+    // Channels 0-1 ride I/O-frame byte 8, 2-3 byte 9, 4-5 byte 10
+    // (spec Table 33 / Table 11 nibble packing).
+    input  logic [NUM_I2C-1:0] i2c_start_det,
+    input  logic [NUM_I2C-1:0] i2c_stop_det,
+    input  logic [NUM_I2C-1:0] i2c_scl_rise,
+    input  logic [NUM_I2C-1:0] i2c_scl_fall,
+    input  logic [NUM_I2C-1:0] i2c_sda_val,
+    output logic [NUM_I2C-1:0] i2c_scl_stretch,
+    output logic [NUM_I2C-1:0] i2c_sda_pull,
+    output logic [NUM_I2C-1:0] i2c_bus_start_gen,
+    output logic [NUM_I2C-1:0] i2c_bus_stop_gen,
 
     // Data channel: local requester + completer master (AVMM/APB-style)
     input  logic        dc_req_valid,
@@ -250,48 +259,58 @@ module ltpi_top #(
         .flow_out(uart_flow_out)
     );
 
-    // I2C relay (channel 0). Bidirectional: either side can initiate a
-    // transaction (SPDM/MCTP requirement); the SCM side wins a
-    // simultaneous-start race, the loser defers via clock stretching.
-    logic [3:0] i2c_tx_event;
-    logic [3:0] i2c_state;
-    logic       i2c_initiator, i2c_start_deferred;
+    // I2C relays, NUM_I2C channels, one nibble each in I/O-frame bytes
+    // 8-10 (Table 11 packing: channel n -> payload[48 + 4n +: 4]).
+    // Bidirectional: either side can initiate a transaction (SPDM/MCTP
+    // requirement); the SCM side wins a simultaneous-start race, the
+    // loser defers via clock stretching. Adding a channel = bumping
+    // NUM_I2C - the generate block does the rest.
+    logic [3:0] i2c_tx_event    [NUM_I2C];
+    logic [3:0] i2c_framed_ev   [NUM_I2C];
+    logic [3:0] i2c_sent_ev     [NUM_I2C];
+    logic       i2c_ev_sent;
 
     // Frame-layer pacing feedback: when an I/O frame completes, the value
     // latched at ITS start (i2c_framed_ev) has been carried on the wire.
-    logic [3:0] i2c_framed_ev, i2c_sent_ev;
-    logic       i2c_ev_sent;
     always_ff @(posedge clk) begin
         if (rst) begin
-            i2c_framed_ev <= I2C_EV_IDLE;
-            i2c_sent_ev   <= I2C_EV_IDLE;
-            i2c_ev_sent   <= 1'b0;
+            i2c_ev_sent <= 1'b0;
+            for (int k = 0; k < NUM_I2C; k++) begin
+                i2c_framed_ev[k] <= I2C_EV_IDLE;
+                i2c_sent_ev[k]   <= I2C_EV_IDLE;
+            end
         end else begin
             i2c_ev_sent <= 1'b0;
             if (tx_frame_done && link_up) begin
-                i2c_sent_ev   <= i2c_framed_ev;
-                i2c_framed_ev <= i2c_tx_event;
-                i2c_ev_sent   <= 1'b1;
+                for (int k = 0; k < NUM_I2C; k++) begin
+                    i2c_sent_ev[k]   <= i2c_framed_ev[k];
+                    i2c_framed_ev[k] <= i2c_tx_event[k];
+                end
+                i2c_ev_sent <= 1'b1;
             end
         end
     end
 
-    ltpi_i2c_relay #(.ARB_PRIORITY(ROLE_SCM)) u_i2c (
-        .clk(clk), .rst(rst),
-        .start_det(i2c_start_det), .stop_det(i2c_stop_det),
-        .scl_rise(i2c_scl_rise), .scl_fall(i2c_scl_fall),
-        .sda_val(i2c_sda_val),
-        .scl_stretch(i2c_scl_stretch), .sda_pull(i2c_sda_pull),
-        .bus_start_gen(i2c_bus_start_gen), .bus_stop_gen(i2c_bus_stop_gen),
-        .tx_event(i2c_tx_event),
-        .rx_event(rx_payload[51:48]),                // byte 8 low nibble
-        .rx_event_valid(op_frame_good),
-        .tx_sent_valid(i2c_ev_sent),
-        .tx_sent_event(i2c_sent_ev),
-        .state(i2c_state),
-        .initiator(i2c_initiator),
-        .start_deferred(i2c_start_deferred)
-    );
+    generate
+        for (genvar gi = 0; gi < NUM_I2C; gi++) begin : g_i2c
+            ltpi_i2c_relay #(.ARB_PRIORITY(ROLE_SCM)) u_i2c (
+                .clk(clk), .rst(rst),
+                .start_det(i2c_start_det[gi]), .stop_det(i2c_stop_det[gi]),
+                .scl_rise(i2c_scl_rise[gi]), .scl_fall(i2c_scl_fall[gi]),
+                .sda_val(i2c_sda_val[gi]),
+                .scl_stretch(i2c_scl_stretch[gi]),
+                .sda_pull(i2c_sda_pull[gi]),
+                .bus_start_gen(i2c_bus_start_gen[gi]),
+                .bus_stop_gen(i2c_bus_stop_gen[gi]),
+                .tx_event(i2c_tx_event[gi]),
+                .rx_event(rx_payload[48 + 4*gi +: 4]),
+                .rx_event_valid(op_frame_good),
+                .tx_sent_valid(i2c_ev_sent),
+                .tx_sent_event(i2c_sent_ev[gi]),
+                .state(), .initiator(), .start_deferred()
+            );
+        end
+    endgenerate
 
     // ------------------------------------------------------------------
     // TX payload mux + frame TX + PHY TX
@@ -357,9 +376,21 @@ module ltpi_top #(
                 tx_payload[23:8]  = speed_select;             // Table 24
             end
             FRAME_ADVERTISE, FRAME_CONFIGURE, FRAME_ACCEPT: begin
-                tx_payload[23:8]  = 16'h0001;  // platform/caps type: default
-                // Default capabilities: GPIO+I2C+UART+Data supported
-                tx_payload[31:24] = 8'h0F;
+                // Table 26/29: OEM platform ID + default capabilities type,
+                // then the real Table 28 capability bytes of THIS build.
+                tx_payload[15:0]  = PLATFORM_ID;              // bytes 2-3
+                tx_payload[23:16] = 8'h00;                    // caps type
+                tx_payload[24]    = 1'b1;                     // GPIO chan
+                tx_payload[25]    = 1'b1;                     // I2C chan
+                tx_payload[26]    = 1'b1;                     // UART chan
+                tx_payload[27]    = 1'b1;                     // Data chan
+                tx_payload[39:32] = 8'(NL_TOTAL % 256);       // NL cnt lo
+                tx_payload[41:40] = 2'(NL_TOTAL / 256);       // NL cnt hi
+                tx_payload[53:48] = 6'((1 << NUM_I2C) - 1);   // I2C enables
+                tx_payload[54]    = 1'b1;                     // Echo (>=2.1)
+                tx_payload[67:64] = 4'h0A;                    // 115200 baud
+                tx_payload[68]    = 1'b1;                     // flow control
+                tx_payload[69]    = 1'b1;                     // UART0 enable
             end
             FRAME_OP_DATA: begin // Default Data Frame, Table 34
                 tx_payload = dtx_payload;
@@ -370,8 +401,9 @@ module ltpi_top #(
                 tx_payload[39:24] = gpio_tx_nl;               // bytes 5-6
                 tx_payload[43:40] = uart_tx_field;            // byte 7 lo
                 tx_payload[47:44] = 4'h0;                     // UART1 unused
-                tx_payload[51:48] = i2c_tx_event;             // byte 8 lo
-                tx_payload[55:52] = I2C_EV_IDLE;              // I2C1 idle
+                for (int k = 0; k < 6; k++)                   // bytes 8-10
+                    tx_payload[48 + 4*k +: 4] =
+                        (k < NUM_I2C) ? i2c_tx_event[k] : I2C_EV_IDLE;
             end
         endcase
     end
@@ -396,6 +428,42 @@ module ltpi_top #(
         .byte_req(tx_byte_req),
         .ser_sdr(ser_tx_sdr),
         .ser_ddr(ser_tx_ddr)
+    );
+
+    // ------------------------------------------------------------------
+    // Peer identification & feature-row decode (Advertise, Tables 26/28).
+    // Tells firmware WHO is on the far end (ASPEED BMC, Lattice, OCP ref,
+    // ...) and exactly which channels/features it advertised.
+    // ------------------------------------------------------------------
+    logic        peer_valid, peer_caps_default;
+    logic [15:0] peer_platform_id;
+    ltpi_pkg::peer_vendor_t peer_vendor;
+    logic        pf_gpio, pf_i2c, pf_uart, pf_data, pf_oem;
+    logic [9:0]  pf_nl_cnt;
+    logic [5:0]  pf_i2c_en, pf_i2c_speed;
+    logic        pf_i2c_echo, pf_uart_flow;
+    logic [3:0]  pf_uart_baud;
+    logic [1:0]  pf_uart_en;
+    logic [15:0] peer_oem_caps;
+
+    ltpi_peer_decode u_peer (
+        .clk(clk), .rst(rst),
+        .frame_valid(frame_valid),
+        .frame_crc_ok(frame_crc_ok),
+        .frame_type(frame_type),
+        .payload(rx_payload),
+        .peer_valid(peer_valid),
+        .peer_platform_id(peer_platform_id),
+        .peer_vendor(peer_vendor),
+        .caps_default(peer_caps_default),
+        .feat_gpio(pf_gpio), .feat_i2c(pf_i2c), .feat_uart(pf_uart),
+        .feat_data(pf_data), .feat_oem(pf_oem),
+        .feat_nl_gpio_cnt(pf_nl_cnt),
+        .feat_i2c_en(pf_i2c_en), .feat_i2c_speed(pf_i2c_speed),
+        .feat_i2c_echo(pf_i2c_echo),
+        .feat_uart_baud(pf_uart_baud), .feat_uart_flow(pf_uart_flow),
+        .feat_uart_en(pf_uart_en),
+        .peer_oem_caps(peer_oem_caps)
     );
 
     // ------------------------------------------------------------------
@@ -446,6 +514,17 @@ module ltpi_top #(
         .ev_cfg_timeout(ev_cfg_to),
         .ev_op_rx(op_frame_good),
         .ev_op_tx(ev_op_tx),
+        .local_platform_id(PLATFORM_ID),
+        .peer_valid(peer_valid),
+        .peer_platform_id(peer_platform_id),
+        .peer_vendor(peer_vendor),
+        .peer_caps_default(peer_caps_default),
+        .peer_channels({pf_oem, pf_data, pf_uart, pf_i2c, pf_gpio}),
+        .peer_nl_cnt(pf_nl_cnt),
+        .peer_i2c_en(pf_i2c_en),
+        .peer_i2c_speed(pf_i2c_speed),
+        .peer_uart({pf_uart_en, pf_uart_flow, pf_uart_baud}),
+        .peer_oem_caps(peer_oem_caps),
         .ctl_soft_reset(csr_soft_reset),
         .ctl_retrain(csr_retrain),
         .ctl_cfg_ready(csr_cfg_ready),
