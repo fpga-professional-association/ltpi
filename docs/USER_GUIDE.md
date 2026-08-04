@@ -84,6 +84,8 @@ iverilog -g2012 -I ../rtl -o tb.vvp ../rtl/ltpi_pkg.sv ../rtl/ltpi_frame_rx.sv \
   tb_ltpi_system.sv
 vvp tb.vvp                    # expect "=== ALL CHECKS PASSED ==="
 python render_waveform.py     # timing-diagram PNG from the VCD
+python render_proof_waves.py  # labeled per-proof evidence PNGs
+                              #   -> docs/proof_waveforms/ (reviewer guide there)
 ```
 
 Compile with `-DDEBUG_MON` for live state/frame trace prints. Verilator

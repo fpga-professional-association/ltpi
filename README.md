@@ -78,6 +78,8 @@ quartus/ ltpi_syn_top.sv, build.tcl, ltpi_timing.sdc   Agilex timing closure
 docs/  USER_GUIDE.md         integration, CSR map, customization, debug
        TRACEABILITY.md       spec clause -> proof/sim mapping
        I2C_LIMITATIONS.md    I2C-over-LTPI speed envelope (>=400Mbps rec.)
+       proof_waveforms/      labeled waveform PNGs of key proofs in action
+                             (per-image REVIEW notes for human verification)
 .github/workflows/verify.yml  CI: 15-suite formal matrix + system sim
 ```
 
